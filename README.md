@@ -14,7 +14,7 @@
 
 [官网下载](https://golang.org/dl/) Go1.6版本，笔者在windows环境中安装，一路Next，然后在cmd中运行。
 
-![start](jpg\start.jpg)
+![start](jpg/start.jpg)
 
 
 
@@ -26,7 +26,7 @@
 
 运行[hello word程序](chap1/helloworld.go)，得到结果：
 
-![hw运行结果](chap1\jpg\hw运行结果.jpg)
+![hw运行结果](chap1/jpg/hw运行结果.jpg)
 
 程序代码结构看起来非常简单：
 
@@ -42,10 +42,12 @@ func main() {
 ```
 
 - 包的声明、引用
+
 - 定义main方法
+
 - 看起来就像python+C的方式。
 
-看起简单，那就Next。
+  看起简单，那就Next。
 
 
 
