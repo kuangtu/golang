@@ -239,3 +239,97 @@ math包中除了提供大量常用的数学函数外，还提供了IEEE754浮点
 
 
 
+# 第四章、复合数据类型
+
+## 4.1 数组
+
+数组是一个由固定长度的特定类型元素组成的序列，一个数组可以由零个或多个元素组成。
+
+和数组对应的类型是slice，是可以增长和收缩的动态序列。
+
+数组遍历，通过range[返回索引和值](chap3/array.go)：
+
+```go
+package main
+
+import "fmt"
+
+func main() {
+    var a [3]int
+    fmt.Println(a[0])
+    fmt.Println(len(a))
+    
+    for i, v := range a{
+        fmt.Printf("%d %d\n", i, v)
+    }
+}
+```
+
+在数组字面值中，如果在数组的长度位置出现的是“...”省略号，则表示数组的长度是根据初始化值的个数来计算。
+
+也可以指定一个索引和对应值列表的方式初始化：
+
+```go
+type Currency int
+
+const (
+    USD Currency = iota // 美元
+    EUR                 // 欧元
+    GBP                 // 英镑
+    RMB                 // 人民币
+)
+
+symbol := [...]string{USD: "$", EUR: "€", GBP: "￡", RMB: "￥"}
+
+fmt.Println(RMB, symbol[RMB]) // "3 ￥"
+```
+
+
+
+## 4.2 slice
+
+lice（切片）代表变长的序列，序列中每个元素都有相同的类型。一个slice类型一般写作[]T，其中T代表slice中元素的类型；slice的语法和数组很像，只是没有固定长度而已。
+
+一个slice由三个部分构成：指针、长度和容量，内置的len和cap函数分别返回slice的长度和容量。
+
+```go
+months := [...]string{1: "January", /* ... */, 12: "December"}
+```
+
+因此一月份是months[1]，十二月份是months[12]。通常，数组的第一个元素从索引0开始，但是月份一般是从1开始的，因此我们声明数组时直接跳过第0个元素，第0个元素会被自动初始化为空字符串。
+
+
+
+
+
+### 4.2.1 append函数
+
+内置的append函数用于向slice追加元素，[参见](chap3/append.go)：
+
+```go
+var x []int
+x = append(x, 1)
+x = append(x, 2, 3)
+x = append(x, 4, 5, 6)
+x = append(x, x...) // append the slice x
+fmt.Println(x)      // "[1 2 3 4 5 6 1 2 3 4 5 6]"
+```
+
+
+
+## 4.3 Map类型
+
+哈希表是一种巧妙并且实用的数据结构。它是一个无序的key/value对的集合，**其中所有的key都是不同的**，然后通过给定的key可以在常数时间复杂度内检索、更新或删除对应的value。
+
+一个map就是一个哈希表的引用，map类型可以写为map[K]V，其中K和V分别对应key和value。map中所有的key都有相同的类型，所有的value也有着相同的类型，但是key和value之间可以是不同的数据类型。
+
+```go
+ages := make(map[string]int) // mapping from strings to ints
+ages := map[string]int{
+    "alice":   31,
+    "charlie": 34,
+}
+```
+
+
+
