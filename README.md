@@ -331,5 +331,57 @@ ages := map[string]int{
 }
 ```
 
+使用内置的delete函数可以删除元素：
 
+```go
+delete(ages, "alice")
+```
+
+
+
+## 4.4 结构体
+
+结构体是一种聚合的数据类型，是由零个或多个任意类型的值聚合成的实体。每个值称为结构体的成员。
+
+下面两个语句声明了一个叫Employee的命名的结构体类型，并且声明了一个Employee类型的变量dilbert：
+
+```go
+type Employee struct {
+    ID        int
+    Name      string
+    Address   string
+    DoB       time.Time
+    Position  string
+    Salary    int
+    ManagerID int
+}
+
+var dilbert Employee
+```
+
+结构体变量的成员可以通过点操作符访问.
+
+结构体指针:
+
+```go
+var employeeOfTheMonth *Employee = &dilbert
+```
+
+### 4.4.1 结构体字面值
+
+结构体值也可以用结构体字面值表示，结构体字面值可以指定每个成员的值。
+
+```go
+type Point struct{ X, Y int }
+
+p := Point{1, 2}
+```
+
+### 4.4.2 结构体比较
+
+如果结构体的全部成员都是可以比较的，那么结构体也是可以比较的，那样的话两个结构体将可以使用==或!=运算符进行比较。
+
+
+
+### 4.4.3 结构体嵌入和匿名成员
 
