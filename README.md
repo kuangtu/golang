@@ -469,3 +469,25 @@ func f(i int, j int, k int,  s string, t string) { /* ... */ }
 
 你可能会偶尔遇到没有函数体的函数声明，这表示该函数不是以Go实现的。这样的声明定义了函数签名。
 
+
+
+## 5.2 递归
+
+函数可以是递归的，这意味着函数可以直接或间接的调用自身。
+
+
+
+## 5.3 多返回值
+
+在Go中，一个函数可以返回多个值。比如：一个是期望得到的返回值，另一个是函数出错时的错误信息。
+
+准确的变量名可以传达函数返回值的含义。尤其在返回值的类型都相同时，就像下面这样：
+
+```go
+func Size(rect image.Rectangle) (width, height int)
+func Split(path string) (dir, file string)
+func HourMinSec(t time.Time) (hour, minute, second int)
+```
+
+如果一个函数所有的返回值都有显式的变量名，那么该函数的return语句可以省略操作数。这称之为bare return。
+
