@@ -561,6 +561,16 @@ fmt.Println(f(3)) // "9"
 
 
 
+## 5.8 Deferred函数
+
+你只需要在调用普通函数或方法前加上关键字defer，就完成了defer所需要的语法。当执行到该条语句时，函数和参数表达式得到计算，但直到包含该defer语句的函数执行完毕时，defer后的函数才会被执行，不论包含defer语句的函数是通过return正常结束，还是由于panic导致的异常结束。
+
+defer语句经常被用于处理成对的操作，如打开、关闭、连接、断开连接、加锁、释放锁。通过defer机制，不论函数逻辑多复杂，都能保证在任何执行路径下，资源被释放。
+
+**类似try catch finally？但是语句的编写更为方便。**
+
+
+
 ## 5.9 Panic异常
 
 Go的类型系统会在编译时捕获很多错误，但有些错误只能在运行时检查，如数组访问越界、空指针引用等。这些运行时错误会引起painc异常。
@@ -629,4 +639,133 @@ fmt.Println(p.Distance(q))  // "5", method call
 ## 8.1 Goroutines
 
 每一个并发的执行单元叫作一个goroutine。简单地把goroutine类比作一个线程。**但是有本质的区别**
+
+
+
+当一个程序启动时，其主函数即在一个单独的goroutine中运行，我们叫它main goroutine。新的goroutine会用go语句来创建。在语法上，go语句是一个普通的函数或方法调用前加上关键字go。go语句会使其语句中的函数在一个新创建的goroutine中运行。而go语句本身会迅速地完成。
+
+```go
+f()    // call f(); wait for it to return
+go f() // create a new goroutine that calls f(); don't wait
+```
+
+然后主函数返回。主函数返回时，所有的goroutine都会被直接打断，程序退出。除了从主函数退出或者直接终止程序之外，没有其它的编程方法能够让一个goroutine来打断另一个的执行。
+
+
+## 8.2并发的Clock服务
+
+网络编程是并发大显身手的一个领域，由于服务器是最典型的需要同时处理很多连接的程序，这些连接一般来自于彼此独立的客户端。
+
+如下是一个顺序执行的时钟服务器：
+
+```go
+// Clock1 is a TCP server that periodically writes the time.
+package main
+
+import (
+    "io"
+    "log"
+    "net"
+    "time"
+)
+
+func main() {
+    listener, err := net.Listen("tcp", "localhost:8000")
+    if err != nil {
+        log.Fatal(err)
+    }
+
+    for {
+        conn, err := listener.Accept()
+        if err != nil {
+            log.Print(err) // e.g., connection aborted
+            continue
+        }
+        handleConn(conn) // handle one connection at a time
+    }
+}
+
+func handleConn(c net.Conn) {
+    defer c.Close()
+    for {
+        _, err := io.WriteString(c, time.Now().Format("15:04:05\n"))
+        if err != nil {
+            return // e.g., client disconnected
+        }
+        time.Sleep(1 * time.Second)
+    }
+}
+```
+
+每次服务一个客户端。
+
+- Listen函数创建了一个net.Listener的对象，这个对象会监听一个网络端口上到来的连接，在这个例子里我们用的是TCP的localhost:8000端口。listener对象的Accept方法会直接阻塞，直到一个新的连接被创建，然后会返回一个net.Conn对象来表示这个连接。
+- handleConn函数会处理一个完整的客户端连接。在一个for死循环中，用time.Now()获取当前时刻，然后写到客户端。由于net.Conn实现了io.Writer接口，我们可以直接向其写入内容。这个死循环会一直执行，直到写入失败。最可能的原因是客户端主动断开连接。这种情况下handleConn函数会用defer调用关闭服务器侧的连接，然后返回到主函数，继续等待下一个连接请求。
+- **time.Time.Format方法提供了一种格式化日期和时间信息的方式。**
+
+
+
+简单的netcat程序如下：
+
+```go
+// Netcat1 is a read-only TCP client.
+package main
+
+import (
+    "io"
+    "log"
+    "net"
+    "os"
+)
+
+func main() {
+    conn, err := net.Dial("tcp", "localhost:8000")
+    if err != nil {
+        log.Fatal(err)
+    }
+    defer conn.Close()
+    mustCopy(os.Stdout, conn)
+}
+
+func mustCopy(dst io.Writer, src io.Reader) {
+    if _, err := io.Copy(dst, src); err != nil {
+        log.Fatal(err)
+    }
+}
+```
+
+这个程序会从连接中读取数据，并将读到的内容写到标准输出中，直到遇到end of file的条件或者发生错误。
+
+以上的程序示例只能同时服务一个客户端，第一个客户端完成之后才能接受第二个客户端的连接。
+
+我们这里对服务端程序做一点小改动，使其支持并发：在handleConn函数调用的地方增加go关键字，让每一次handleConn的调用都进入一个独立的goroutine。
+
+```go
+for {
+    conn, err := listener.Accept()
+    if err != nil {
+        log.Print(err) // e.g., connection aborted
+        continue
+    }
+    go handleConn(conn) // handle connections concurrently
+}
+```
+
+## 8.3 并发的Echo服务
+
+
+
+
+
+## 8.4 Channels
+
+如果说goroutine是Go语言程序的并发体的话，那么channels则是它们之间的通信机制。一个channel是一个通信机制，它可以让一个goroutine通过它给另一个goroutine发送值信息。每个channel都有一个特殊的类型，也就是channels可发送数据的类型。一个可以发送int类型数据的channel一般写为chan int。
+
+使用内置的make函数，我们可以创建一个channel：
+
+```go
+ch := make(chan int) // ch has type 'chan int'
+```
+
+和map类似，channel也对应一个make创建的底层数据结构的引用。当我们复制一个channel或用于函数参数传递时，我们只是拷贝了一个channel引用，因此调用者和被调用者将引用同一个channel对象。和其它的引用类型一样，channel的零值也是nil。
 
