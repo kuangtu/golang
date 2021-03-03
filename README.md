@@ -769,3 +769,115 @@ ch := make(chan int) // ch has type 'chan int'
 
 和map类似，channel也对应一个make创建的底层数据结构的引用。当我们复制一个channel或用于函数参数传递时，我们只是拷贝了一个channel引用，因此调用者和被调用者将引用同一个channel对象。和其它的引用类型一样，channel的零值也是nil。
 
+
+
+# 第九章 基于共享变量的开发
+
+
+
+## 9.1 竞争条件
+
+​	在一个协程的程序中，程序的执行顺序只由程序的逻辑来决定。在多个协程中，也是按照既定的顺序去执行。但是通常情况下不知道分别位于两个协程中事件x和事件y的执行顺序。
+
+竞争条件指的是程序在多个goroutine交叉执行操作时，没有给出正确的结果。
+
+基于银行账户修改，来说明情况：
+
+```go
+// Package bank implements a bank with only one account.
+package bank
+var balance int
+func Deposit(amount int) { balance = balance + amount }
+func Balance() int { return balance }
+```
+
+如果发运行：
+
+```go
+// Alice:
+go func() {
+    bank.Deposit(200)                // A1
+    fmt.Println("=", bank.Balance()) // A2
+}()
+
+// Bob:
+go bank.Deposit(100)                 // B
+```
+
+Alice存了200，然后检查她的余额，同时Bob存了200，然后检查她的余额，同时Bob存了100。因为A1和A2是和B并发执行的，我们没法预测他们发生的先后顺序。通常认为出现三种可能性：“Alice先”，“Bob先”以及“Alice/Bob/Alice”交错执行。但是**会出现另外一种情况“，这种情况下Bob的存款会在Alice存款操作中间，在余额被读到（balance + amount）之后，在余额被更新之前（balance = ...），这样会导致Bob的交易丢失。
+
+```go
+Data race
+0
+A1r      0     ... = balance + amount
+B      100
+A1w    200     balance = ...
+A2  "= 200"
+```
+
+因为balance赋值不是原始的。
+
+**无论任何时候，只要有两个goroutine并发访问同一变量，且至少其中的一个是写操作的时候就会发生数据竞争。**
+
+
+
+## 9.2 sync.Mutex互斥锁
+
+sync包里的Mutex，它的Lock方法能够获取到token(这里叫锁)，并且Unlock方法会释放这个token：
+
+```go
+import "sync"
+
+var (
+    mu      sync.Mutex // guards balance
+    balance int
+)
+
+func Deposit(amount int) {
+    mu.Lock()
+    balance = balance + amount
+    mu.Unlock()
+}
+
+func Balance() int {
+    mu.Lock()
+    b := balance
+    mu.Unlock()
+    return b
+}
+```
+
+
+
+每次一个goroutine访问bank变量时（这里只有balance余额变量），它都会调用mutex的Lock方法来获取一个互斥锁。如果其它的goroutine已经获得了这个锁的话，这个操作会被阻塞直到其它goroutine调用了Unlock使该锁变回可用状态。mutex会保护共享变量。
+
+**如果函数中分支较多，释放锁逻辑处理比较繁琐**，通过defer语法处理，我们用defer来调用Unlock，临界区会隐式地延伸到函数作用域的最后，这样我们就从“总要记得在函数返回之后或者发生错误返回时要记得调用一次Unlock”这种状态中获得了解放。
+
+```go
+func Balance() int {
+    mu.Lock()
+    defer mu.Unlock()
+    return balance
+}
+```
+
+
+
+## 9.3 读写锁
+
+由于Balance函数只需要读取变量的状态，所以我们同时让多个Balance调用并发运行事实上是安全的，只要在运行的时候没有存款或者取款操作就行。在这种场景下我们需要一种特殊类型的锁，其允许多个只读操作并行执行，但写操作会完全互斥。这种锁叫作“多读单写”锁（multiple readers, single writer lock），Go语言提供的这样的锁是sync.RWMutex：
+
+```go
+var mu sync.RWMutex
+var balance int
+func Balance() int {
+    mu.RLock() // readers lock
+    defer mu.RUnlock()
+    return balance
+}
+```
+
+
+
+## 9.4 内存同步
+
