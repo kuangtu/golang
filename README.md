@@ -991,5 +991,97 @@ import (
 )
 ```
 
+如果你计划分享或发布包，那么导入路径最好是全球唯一的。为了避免冲突，所有非标准库包的导入路径建议以所在组织的互联网域名为前缀；而且这样也有利于包的检索。例如，上面的import语句导入了Go团队维护的HTML解析器和一个流行的第三方维护的MySQL驱动。
 
+## 10.3 包声明
+
+在每个Go语言源文件的开头都必须有包声明语句。包声明语句的主要目的是确定当前包被其它包导入时默认的标识符（也称为包名）。
+
+例如，math/rand包的每个源文件的开头都包含`package rand`包声明语句，所以当你导入这个包，你就可以用rand.Int、rand.Float64类似的方式访问包的成员。
+
+```go
+package main
+
+import (
+    "fmt"
+    "math/rand"
+)
+
+func main() {
+    fmt.Println(rand.Int())
+}
+```
+
+
+
+## 10.4 导入声明
+
+可以在一个Go语言源文件包声明语句之后，其它非导入声明语句之前，包含零到多个导入包声明语句。每个导入声明可以单独指定一个导入路径，也可以通过圆括号同时导入多个导入路径。下面两个导入形式是等价的，但是第二种形式更为常见。
+
+```go
+import "fmt"
+import "os"
+
+import (
+    "fmt"
+    "os"
+)
+```
+
+果我们想同时导入两个有着名字相同的包，例如math/rand包和crypto/rand包，那么导入声明必须至少为一个同名包指定一个新的包名以避免冲突。这叫做导入包的重命名。
+
+```go
+import (
+    "crypto/rand"
+    mrand "math/rand" // alternative name mrand avoids conflict
+)
+```
+
+
+
+## 10. 5 包的匿名导入
+
+如果只是导入一个包而并不使用导入的包将会导致一个编译错误。
+
+但是有时候我们只是想利用导入包而产生的副作用：它会计算包级变量的初始化表达式和执行导入包的init初始化函数。这时候我们需要抑制“unused import”编译错误，我们可以用下划线`_`来重命名导入的包。像往常一样，下划线`_`为空白标识符，并不能被访问。
+
+```go
+import _ "image/png" // register PNG decoder
+```
+
+
+
+## 10.6  包和命名
+
+当创建一个包，一般要用短小的包名，但也不能太短导致难以理解。标准库中最常用的包有bufio、bytes、flag、fmt、http、io、json、os、sort、sync和time等包。
+
+尽可能让命名有描述性且无歧义。
+
+包名一般采用单数的形式。
+
+
+
+## 10.7 工具
+
+本章剩下的部分将讨论Go语言工具箱的具体功能，包括如何下载、格式化、构建、测试和安装Go语言编写的程序。
+
+```go
+$ go
+...
+    build            compile packages and dependencies
+    clean            remove object files
+    doc              show documentation for package or symbol
+    env              print Go environment information
+    fmt              run gofmt on package sources
+    get              download and install packages and dependencies
+    install          compile and install packages and dependencies
+    list             list packages
+    run              compile and run Go program
+    test             test packages
+    version          print Go version
+    vet              run go tool vet on packages
+
+Use "go help [command]" for more information about a command.
+...
+```
 
