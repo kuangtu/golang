@@ -1131,9 +1131,19 @@ $ go env -w GOPROXY=https://goproxy.cn,direct
 
 可以避免网络超时的情况。
 
+通过 go env，查看相应的配置：
+
+![go_env环境](jpg/go_env环境.png)
+
+可以看到相应的包缓存路径。有些github包安装如下。
+
+![包的位置](jpg/包的位置.png)
 
 
 
+https://zhuanlan.zhihu.com/p/60703832
+
+拜拜了，GOPATH君！新版本Golang的包管理入门教程
 
 
 
@@ -1236,3 +1246,4 @@ func TestNonPalindrome(t *testing.T) {
 # 第十二章 反射
 
 有时候我们需要编写一个函数能够处理一类并不满足普通公共接口的类型的值，也可能是因为它们并没有确定的表示方式，或者是在我们设计该函数的时候这些类型可能还不存在。
+
