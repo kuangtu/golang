@@ -201,6 +201,10 @@ Go语言中的包和其他语言的库或模块的概念类似，目的都是为
 
 
 
+
+
+
+
 # 第三章、基础数据类型
 
 ## 3.1 整数
@@ -213,7 +217,7 @@ Go语言同时提供了有符号和无符号类型的整数运算。这里有int
 
 还有一种无符号的整数类型uintptr，没有指定具体的bit大小但是足以容纳指针。
 
-
+### 3.1.1 运算符优先级
 
 Go语言中关于算术运算、逻辑运算和比较运算的二元运算符，它们按照优先级递减的顺序排列：
 
@@ -224,6 +228,17 @@ Go语言中关于算术运算、逻辑运算和比较运算的二元运算符，
 &&
 ||
 ```
+
+```go
+Precedence    Operator
+    5             *  /  %  <<  >>  &  &^
+    4             +  -  |  ^
+    3             ==  !=  <  <=  >  >=
+    2             &&
+    1             ||
+```
+
+
 
 
 
@@ -386,6 +401,12 @@ p := Point{1, 2}
 
 
 ### 4.4.3 结构体嵌入和匿名成员
+
+
+
+### 4.4.4 结构体变量赋值
+
+可以通过键值的方式，通过":"分隔。
 
 
 
@@ -773,6 +794,18 @@ ch := make(chan int) // ch has type 'chan int'
 
 
 
+一个channel有发送和接受两个主要操作，都是通信行为。一个发送语句将一个值从一个goroutine通过channel发送到另一个执行接收操作的goroutine。发送和接收两个操作都使用`<-`运算符。在发送语句中，`<-`运算符分割channel和要发送的值。在接收语句中，`<-`运算符写在channel对象之前。一个不使用接收结果的接收操作也是合法的。
+
+```go
+ch <- x  // a send statement
+x = <-ch // a receive expression in an assignment statement
+<-ch     // a receive statement; result is discarded
+```
+
+
+
+
+
 # 第九章 基于共享变量的开发
 
 
@@ -1086,6 +1119,23 @@ $ go
 Use "go help [command]" for more information about a command.
 ...
 ```
+
+## 10.8 包的下载安装
+
+go程序编写过程中会用到第三方库，很多使用了github。在go build过程中会下载第三方库。默认的go proxy代理很慢，可以进行修改。参考[链接](https://goproxy.cn/)。
+
+```bash
+$ go env -w GO111MODULE=on
+$ go env -w GOPROXY=https://goproxy.cn,direct
+```
+
+可以避免网络超时的情况。
+
+
+
+
+
+
 
 # 第11章 测试
 
