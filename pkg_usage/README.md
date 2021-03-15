@@ -8,7 +8,7 @@ Golang 的标准库提供了 flag 包来处理命令行参数。
 
 
 
-# 二、其他包的使用
+# 二、缓存相关
 
 
 
@@ -20,7 +20,7 @@ https://github.com/patrickmn/go-cache
 
 
 
-## 2.2 、基本使用
+## 2.1.1、基本使用
 
 参照 [示例程序](go-cache/cache-test.go):
 
@@ -49,4 +49,6 @@ func main() {
 ```
 
 
+
+## 2.2 group-cached使用
 
