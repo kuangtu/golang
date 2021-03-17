@@ -1182,6 +1182,41 @@ https://zhuanlan.zhihu.com/p/60703832
 
 拜拜了，GOPATH君！新版本Golang的包管理入门教程
 
+## 10.9包管理
+
+（1）GOPATH使用
+
+是GO开发环境所设置的一个变量。历史版本的 go 语言开发时，需要将代码放在 GOPATH 目录的 src 文件夹下。go get 命令获取依赖，也会自动下载到 GOPATH 的 src 下。GOPATH设置如下：
+
+![gopath设置](jpg\gopath设置.png)
+
+通过go get进行包下载：
+
+![goget](jpg\goget.png)
+
+可以看到下载的数据包在GOPATH路径中：
+
+![goget_envpath](C:\moxuansheng\workspace\golang\jpg\goget_envpath.png)
+
+（2）存在的问题
+
+GOPATH 模式下，go get 命令使用时，没有版本选择机制，拉下来的依赖代码都会默认当前最新版本，而且如果当项目 A 和项目 B 分别依赖项目 C 的两个不兼容版本时， GOPATH 路径下只有一个版本的 C 将无法同时满足 A 和 B 的依赖需求。这可以说是一个很大的缺陷了，因而 Go1.13 起，官方就不再推荐使用 GOPATH 的模式了。
+
+(3) Go modules 
+
+基本思路是**为每个项目单独维护一份对应版本依赖的拷贝**。主要涉及到如下几个配置：
+
+```go
+GO111MODULE="auto"
+GOPROXY="https://goproxy.io,direct"
+GONOPROXY=""
+GOSUMDB="sum.golang.org"
+GONOSUMDB=""
+GOPRIVATE=""
+```
+
+是否开启go module的开关，可用参数值如下：
+
 
 
 # 第11章 测试
