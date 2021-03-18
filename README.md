@@ -1217,7 +1217,56 @@ GOPRIVATE=""
 
 是否开启go module的开关，可用参数值如下：
 
+|       值       |                             含义                             |
+| :------------: | :----------------------------------------------------------: |
+|      auto      | 在 GOPATH/src 之外，将自动使用 Go Modules 模式。否则还是用 GOPATH 模式。目前在最新的 Go1.14 中是默认值。 |
+|       on       | 启用 Go modules，将不使用 GOPATH，推荐设置，将会是未来版本中的默认值。 |
+| off 或者不设置 | Go 将使用 GOPATH 和沿用老的 vendor 机制，禁用 Go modules。不推荐设置。 |
 
+
+
+【参考文献】https://www.infoq.cn/article/xyjhjja87y7pvu1iwhz3
+
+（4）go mod init命令
+
+项目初始化：
+
+```go
+go mod init github/kuangtu/groupcache_test
+```
+
+可以看到创建了文件go.mod：
+
+![goinit](jpg\goinit.png)
+
+文件内容如下：
+
+```
+module github/kuangtu/groupcache_test
+
+go 1.16
+```
+
+它记录了当前项目的模块信息，每一行都以一个关键词开头。在该目录下执行go get，下载依赖包：
+
+![go get pkg](jpg\go get pkg.png)
+
+再次查看go.mod文件：
+
+```
+module github/kuangtu/groupcache_test
+
+go 1.16
+
+require (
+	github.com/golang/groupcache v0.0.0-20200121045136-8c9f03a8e57e // indirect
+	github.com/golang/protobuf v1.4.3 // indirect
+)
+```
+
+go.sum文件：
+
+下载依赖包有可能被恶意篡改，以及缓存在本地的依赖包也有被篡改的可能，单单一个 go.mod 文件并不能保证一致性构建，Go 开发团队在引入 go.mod 的同时也引入了 go.sum 文件，用于记录每个依赖包的哈希值（SHA-256 算法），在 build 时，如果本地的依赖包 hash 值与 go.sum 文件中记录得不一致，则会拒绝 build。
 
 # 第11章 测试
 
