@@ -933,7 +933,43 @@ func Balance() int {
 }
 ```
 
+### 9.2.1 Snyc.Once
+Once类型的对象，只执行一次动作。
 
+```go
+package main
+
+import (
+	"fmt"
+	"sync"
+)
+
+func main() {
+	var once sync.Once
+	onceBody := func() {
+		fmt.Println("Only once")
+	}
+	done := make(chan bool)
+	for i := 0; i < 10; i++ {
+		go func() {
+			once.Do(onceBody)
+			done <- true
+		}()
+	}
+	for i := 0; i < 10; i++ {
+		<-done
+	}
+}
+
+```
+
+Once类型执行Do方法：
+
+```go
+func (o *Once) Do(f func())
+```
+
+只执行一次.
 
 ## 9.3 读写锁
 
@@ -1026,6 +1062,8 @@ OS线程会被操作系统内核调度。每几毫秒，一个硬件计时器会
 在大多数支持多线程的操作系统和程序语言中，当前的线程都有一个独特的身份（id），并且这个身份信息可以以一个普通值的形式被很容易地获取到，典型的可以是一个integer或者指针值。
 
 goroutine没有可以被程序员获取到的身份（id）的概念。
+
+
 
 
 
