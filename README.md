@@ -317,8 +317,6 @@ months := [...]string{1: "January", /* ... */, 12: "December"}
 
 
 
-
-
 ### 4.2.1 append函数
 
 内置的append函数用于向slice追加元素，[参见](chap3/append.go)：
@@ -332,7 +330,17 @@ x = append(x, x...) // append the slice x
 fmt.Println(x)      // "[1 2 3 4 5 6 1 2 3 4 5 6]"
 ```
 
+### 4.2.2 nil切片
 
+```go
+var slice []int
+```
+
+函数要求返回一个切片，但是发生异常的时候。 
+
+### 4.2.3 空切片
+
+空切片底层数组包含0个元素，也没有分配任何存储空间。数据库查询返回0个查询结果时。
 
 ## 4.3 Map类型
 

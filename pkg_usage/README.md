@@ -12,6 +12,19 @@ Golang 的标准库提供了 flag 包来处理命令行参数。
 
 atomic包通过提供低级别的原子内存原语来实现同步算法。
 
+## 3、 strconv
+
+标准的strconv实现了字符串和其他类型之间的相互转换。
+
+### 3.1 数值转换
+
+常用的是将字符串转为int，或者int转为字符串。
+
+```go
+i, err := strconv.Atoi("-42")
+s := strconv.Itoa(-42)
+```
+
 
 
 
