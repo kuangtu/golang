@@ -330,6 +330,8 @@ x = append(x, x...) // append the slice x
 fmt.Println(x)      // "[1 2 3 4 5 6 1 2 3 4 5 6]"
 ```
 
+需要一个被操作的切片和一个要追加的值。
+
 ### 4.2.2 nil切片
 
 ```go
