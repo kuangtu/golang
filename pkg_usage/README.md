@@ -25,7 +25,34 @@ i, err := strconv.Atoi("-42")
 s := strconv.Itoa(-42)
 ```
 
+## 4、容器
 
+### 4.1 链表
+
+Package list implements 实现了一个双向链表。
+
+```go
+package main
+
+import (
+    "fmt"
+    "container/list"
+)
+
+func main() {
+    fmt.Println("create list")
+    //beego.Run()
+    l := list.New()
+    e4 := l.PushBack(4)
+    eH := l.PushBack("H")
+    
+    //遍历
+    for e := l.Front(); e != nil; e = e.Next() {
+        fmt.Println(e.Value)
+}
+```
+
+元素可以是任意的类型。
 
 
 
