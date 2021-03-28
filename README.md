@@ -554,6 +554,7 @@ ages := map[string]int{
 映射的值可以是任何值。可以是内置类型，可以是结构类型，只要这个值可以使用==运算符进行比较。
 
 **使用切片作为映射的值**
+
 ```go
 // 创建一个映射，使用字符串切片作为值 
 dict := map[int][]string{}
@@ -643,6 +644,8 @@ type Point struct{ X, Y int }
 p := Point{1, 2}
 ```
 
+
+
 ### 4.4.2 结构体比较
 
 如果结构体的全部成员都是可以比较的，那么结构体也是可以比较的，那样的话两个结构体将可以使用==或!=运算符进行比较。
@@ -655,9 +658,38 @@ p := Point{1, 2}
 
 ### 4.4.4 结构体变量赋值
 
-可以通过键值的方式，通过":"分隔。
+可以通过键值的方式，通过":"分隔。结构体字面值：
 
+```go
+user{
+    name:      "Lisa",
+    email:     "lisa@email.com",
+    ext:       123,
+    privileged: true, 
+    }
+```
 
+对于字段的声明顺序没有要求。
+
+不使用字段名称，创建结构类型的值。
+
+```go
+lisa := user{"Lisa", "lisa@email.com", 123, true}
+```
+
+结尾不需要逗号，但是值的顺序需要和结构体中声明的字段顺序一致。
+
+使用其他结构类型声明字段
+
+```go
+// admin需要一个  user类型作为管理者，并附加权限
+type admin struct {
+   person user
+   level string 
+ }
+```
+
+为了初始化person，创建user结构类型，并赋给person字段。
 
 ## 4.5 JSON
 
@@ -711,6 +743,67 @@ Age:    {{.CreatedAt | daysAgo}} days
 模板中`{{range .Items}}`和`{{end}}`对应一个循环action，因此它们之间的内容可能会被展开多次，循环每次迭代的当前值对应当前的Items元素的值。
 
 在一个action中，`|`操作符表示将前一个表达式的结果作为后一个函数的输入，类似于UNIX中管道的概念。
+
+
+
+## 4.7 嵌入类型
+
+Go 语言允许用户扩展或者修改已有类型的行为。嵌入类 型是将已有的类型直接声明在新的结构类型里。被嵌入的类型被称为新的外部类型的内部类型。
+
+结构体基于字段名称和字段类型，也可以只有字段类型，这种声明方式称为类型嵌入。
+
+```go
+type Base struct {
+  b int
+}
+
+
+type Container struct {     // Container is the embedding struct
+  Base                      // Base is the embedded struct
+  c string
+}
+```
+
+
+
+Container实例也包含了字段b，称为提升类型（*promoted* field），直接访问：
+
+```go
+co := Container{}
+co.b = 1
+co.c = "string"
+fmt.Printf("co -> {b: %v, c: %v}\n", co.b, co.c)
+```
+
+co.b格式为了语法便利，可以通过co.Base.b访问。
+
+嵌入的结构体仍然可以使用方法：
+
+```go
+func (base Base) Describe() string {
+  return fmt.Sprintf("base %d belongs to us", base.b)
+}
+```
+
+可以通过Container的实例访问：
+
+```go
+fmt.Println(cc.Describe())
+```
+
+
+
+
+
+
+
+https://go101.org/article/type-embedding.html
+
+
+
+https://eli.thegreenplace.net/2020/embedding-in-go-part-1-structs-in-structs/
+
+
 
 
 
@@ -853,6 +946,8 @@ Go的类型系统会在编译时捕获很多错误，但有些错误只能在运
 
 # 6 方法
 
+方法能给用户定义的类型添加新的行为。
+
 ## 6.1 方法声明
 
 在函数声明时，在其名字之前放上一个变量，即是一个方法。这个附加的参数会将该函数附加到这种类型上，即相当于为这种类型定义了一个独占的方法。
@@ -875,7 +970,7 @@ func (p Point) Distance(q Point) float64 {
 }
 ```
 
-上面的代码里那个附加的参数p，叫做方法的接收器（receiver），类似"this"。
+上面的代码里那个附加的参数p，叫做方法的接收器（receiver），类似"this"。**将函数与接收者绑定。**
 
 在Go语言中，我们并不会像其它语言那样用this或者self作为接收器；我们可以任意的选择接收器的名字。由于接收器的名字经常会被使用到，所以保持其在方法间传递时的一致性和简短性是不错的主意。这里的建议是可以使用其类型的第一个字母，比如这里使用了Point的首字母p。
 
@@ -890,6 +985,32 @@ Go语言中有两种类型的接收者：值接收者和指针接收者。（C�
 
 - 如果使用值接收者，调用时会使用这个值的一个副本来执行。
 - 如果使用指针接收者，调用时使用实际值来调用方法。
+
+使用值接收者声明的方法：
+
+```go
+bill := user{"Bill", "bill@email.com"}
+bill.notify()
+```
+
+使用 bill 的值作为接收者进行调用，方法 notify 会接收到 bill的值的一个副本。**对于副本的修改，不会体现到原有值当中**
+
+也可以使用指针来调用使用值接收者声明的方法：
+
+```go
+lisa := &user{"Lisa", "lisa@email.com"}
+lisa.notify()
+```
+
+lisa指向user类型值的指针。实际上Go在代码背后执行的代码：
+
+```go
+(*lisa).notify()
+```
+
+指针被解引用为值， 这样就符合了值接收者的要求。notify操作的是一个副本。
+
+
 
 
 
