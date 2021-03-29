@@ -1887,3 +1887,59 @@ godoc -http=:6060 浏览文档。
 
 # 标准库
 
+
+
+## 文档与源代码
+
+标准库里包含众多的包：
+
+
+
+![标准库](jpg/标准库.png)
+
+如果要了解更多的的包描述，可以参见[网上维护文档](http://golang.org/pkg/)。
+
+不管用什么方式安装 Go，标准库的源代码都会安装在$GOROOT/src/pkg 文件夹中。
+
+标准库的源代码是经过预编译的。这些预编译后的文件，称作归 档文件（archive file）， 可以 在 $GOROOT/pkg 文件夹中找到已经安装的各目标平台和操作系统的 归档文件。
+
+![归档文件](jpg/归档文件.png)
+
+
+
+## 记录日志
+
+
+
+### log包
+
+通常log可以产生的日志项包含前缀、日期时间 戳、该 日志具体是由哪个源文件记录的、源文件记录日志所在行，最后是日志消息。
+
+```go
+// 这个示例程序展示如何使用最基本的  log包
+package main
+
+import ( 
+   "log"
+) 
+
+func init() { 
+   log.SetPrefix("TRACE: ")
+   log.SetFlags(log.Ldate | log.Lmicroseconds | log.Llongfile)
+} 
+
+func main() { 
+   // Println写到标准日志记录器
+   log.Println("message")
+
+   // Fatalln在调用  Println()之后会接着调用  os.Exit(1)
+   log.Fatalln("fatal message")
+
+   // Panicln在调用  Println()之后会接着调用  panic()
+   log.Panicln("panic message")
+} 
+```
+
+init函数，这个函数会在运行 main()之前作为程序初始化的一部分执行。通常配置日志参数。
+
+log 包有一个很方便的地方就是，这些日志记录器是多 goroutine 安全的。这意味着在多个 goroutine 可以同时调用来自同一个日志记录器的这些函数，而不 会有彼此间的写冲突。
