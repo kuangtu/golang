@@ -1185,6 +1185,10 @@ for {
 
 ## 8.4 Channels
 
+在 Go 语言里，你不仅可以使用原子函数和互斥锁来保证对共享资源的安全访 问以及消除竞争状态，还可以使用通道，通过发送和接收需要共享的资源，在 goroutine 之间做 同步。
+
+
+
 如果说goroutine是Go语言程序的并发体的话，那么channels则是它们之间的通信机制。一个channel是一个通信机制，它可以让一个goroutine通过它给另一个goroutine发送值信息。每个channel都有一个特殊的类型，也就是channels可发送数据的类型。一个可以发送int类型数据的channel一般写为chan int。
 
 使用内置的make函数，我们可以创建一个channel：
@@ -1195,19 +1199,102 @@ ch := make(chan int) // ch has type 'chan int'
 
 和map类似，channel也对应一个make创建的底层数据结构的引用。当我们复制一个channel或用于函数参数传递时，我们只是拷贝了一个channel引用，因此调用者和被调用者将引用同一个channel对象。和其它的引用类型一样，channel的零值也是nil。
 
+```go
+// 无缓冲的整型通道 
+unbuffered := make(chan int)
+// 有缓冲的字符串通道
+buffered := make(chan string, 10)
+```
+
 
 
 一个channel有发送和接受两个主要操作，都是通信行为。一个发送语句将一个值从一个goroutine通过channel发送到另一个执行接收操作的goroutine。发送和接收两个操作都使用`<-`运算符。在发送语句中，`<-`运算符分割channel和要发送的值。在接收语句中，`<-`运算符写在channel对象之前。一个不使用接收结果的接收操作也是合法的。
 
 ```go
-ch <- x  // a send statement
-x = <-ch // a receive expression in an assignment statement
+ch <- x  // a send statement 通过通道发送一个值
+x = <-ch // a receive expression in an assignment statement 从通道接收一个值
 <-ch     // a receive statement; result is discarded
+```
+
+### 无缓冲通道
+无缓冲的通道（unbuffered channel）是指在接收前没有能力保存任何值的通道。这种类型的通 道要求发送 goroutine 和接收 goroutine 同时准备好，才能完成发送和接收操作。
+
+![无缓冲通道同步](jpg/无缓冲通道同步.png)
+
+```go
+// 这个示例程序展示如何用无缓冲的通道来模拟
+// 4个  goroutine间的接力比赛
+package main
+
+import ( 
+   "fmt"
+   "sync"
+   "time"
+) 
+
+// wg用来等待程序结束
+var wg sync.WaitGroup
+
+// main是所有  Go程序的入口
+func main() { 
+   // 创建一个无缓冲的通道
+   baton := make(chan int)
+
+   // 为最后一位跑步者将计数加  1 
+   wg.Add(1)
+
+   // 第一位跑步者持有接力棒
+   go Runner(baton)
+
+   // 开始比赛，模拟拿到了接力棒
+   baton <- 1 
+
+   // 等待比赛结束
+   wg.Wait()
+} 
+
+// Runner模拟接力比赛中的一位跑步者
+func Runner(baton chan int) { 
+   var newRunner int
+    // 等待接力棒
+    runner := <-baton
+
+    // 开始绕着跑道跑步
+    fmt.Printf("Runner %d Running With Baton\n", runner)
+
+    // 创建下一位跑步者
+    if runner != 4 { 
+        newRunner = runner + 1 
+        fmt.Printf("Runner %d To The Line\n", newRunner)
+        go Runner(baton)
+    } 
+
+    // 围绕跑道跑
+    time.Sleep(100 * time.Millisecond)
+
+    // 比赛结束了吗？
+    if runner == 4 { 
+        fmt.Printf("Runner %d Finished, Race Over\n", runner)
+        wg.Done()
+        return
+    } 
+
+    // 将接力棒交给下一位跑步者
+    fmt.Printf("Runner %d Exchange With Runner %d\n",
+        runner,
+        newRunner)
+
+    baton <- newRunner
+}
 ```
 
 
 
+### 有缓冲的通道
 
+有缓冲的通道（buffered channel）是一种在被接收前能存储一个或者多个值的通道。这种类 型的通道并不强制要求 goroutine 之间必须同时完成发送和接收。通道会阻塞发送和接收动作的 条件也会不同。
+
+只有在通道中没有要接收的值时，接收动作才会阻塞。只有在通道没有可用缓冲 区容纳被发送的值时，发送动作才会阻塞。
 
 # 第九章 基于共享变量的开发
 
