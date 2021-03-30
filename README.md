@@ -1943,3 +1943,95 @@ func main() {
 init函数，这个函数会在运行 main()之前作为程序初始化的一部分执行。通常配置日志参数。
 
 log 包有一个很方便的地方就是，这些日志记录器是多 goroutine 安全的。这意味着在多个 goroutine 可以同时调用来自同一个日志记录器的这些函数，而不 会有彼此间的写冲突。
+
+
+
+### 定制日志记录器
+
+要想创建一个定制的日志记录器，需要创建一个 Logger类型值。
+
+创建了 4 种不同的 Logger 类型的指针变量，分别命名为 Trace、Info、Warning 和 Error，每个变量使用不同的配置，用来表示不同的重要程度。
+
+```go
+// 这个示例程序展示如何创建定制的日志记录器
+ package main
+
+ import ( 
+    "io"
+    "io/ioutil"
+    "log"
+    "os"
+ ) 
+
+//Log类型的指针变量
+ var ( 
+    Trace  *log.Logger // 记录所有日志
+    Info   *log.Logger // 重要的信息
+    Warning *log.Logger // 需要注意的信息
+    Error  *log.Logger // 非常严重的问题
+ ) 
+
+ func init() { 
+    file, err := os.OpenFile("errors.txt",
+ os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+    if err != nil { 
+            log.Fatalln("Failed to open error log file:", err)
+         } 
+
+   Trace = log.New(ioutil.Discard,
+       "TRACE: ",
+       log.Ldate|log.Ltime|log.Lshortfile)
+
+   Info = log.New(os.Stdout,
+       "INFO: ",
+       log.Ldate|log.Ltime|log.Lshortfile)
+
+   Warning = log.New(os.Stdout,
+       "WARNING: ",
+       log.Ldate|log.Ltime|log.Lshortfile)
+
+   Error = log.New(io.MultiWriter(file, os.Stderr),
+       "ERROR: ",
+       log.Ldate|log.Ltime|log.Lshortfile)
+} 
+
+func main() { 
+   Trace.Println("I have something standard to say")
+   Info.Println("Special Information")
+   Warning.Println("There is something you need to know about")
+   Error.Println("Something has failed")
+}
+```
+
+**注意Log创建函数最后的参数，包含了哪些属性.**
+
+其中，Logger包的New函数：
+
+```go
+// New创建一个新的Logger。out参数设置日志数据将被写入的目的地 
+// 参数  prefix会在生成的每行日志的最开始出现
+// 参数  flag定义日志记录包含哪些属性
+func New(out io.Writer, prefix string, flag int) *Logger { return &Logger{out: out, prefix: prefix, flag: flag}
+}
+```
+
+## 输入和输出
+
+与 stdout 和 stdin 对应，这个包含有 io.Writer 和 io.Reader 两个接口。所有实现了这两个接口的 类型的值，都可以使用 io包提供的所有功能，也可以用于其他包里接受这两个接口的函数以及方法。
+
+### Writer和Reader接口
+
+io 包是围绕着实现了 io.Writer和 io.Reader接口类型的值而构建的。由于 io.Writer 和 io.Reader提供了足够的抽象，这些 io包里的函数和方法并不知道数据的类型，也不知道 这些数据在物理上是如何读和写的。
+
+```go
+type Writer interface { 
+Write(p []byte) (n int, err error) 
+} 
+```
+
+接口声明，有唯一的方法Write，接受一个byte切片并返回两个值。第一个值是写入的字节数，第二个值是 error 错 误值。
+
+
+
+
+
