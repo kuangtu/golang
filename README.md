@@ -1853,7 +1853,62 @@ func TestNonPalindrome(t *testing.T) {
 
 基准测试是测量一个程序在固定工作负载下的性能。在Go语言中，基准测试函数和普通测试函数写法类似，但是以Benchmark为前缀名，并且带有一个`*testing.B`类型的参数；`*testing.B`参数除了提供和`*testing.T`类似的方法，还有额外一些和性能测量相关的方法。它还提供了一个整数N，用于指定操作执行的循环次数。
 
+## 单元测试
+单元测试是用来测试程序的一部分代码或者一组代码的函数。
+- 正向路径测试，在正常执行的情况下，保障代码不产生错误的测试；
+- 负向路径测试，保证代码不仅会产生错误，而且是预期的错误。
+Go语言中有几种写单元测试的方法：
+- 基础测试，只使用一组参数和结果来测试一段代码；
+- 表组测试，也会测试一段代码，但是会使用多组参数和结果进行测试；
+- 用一些方法mock测试代码需要使用到的外部资源，比如：数据库或者网络服务器。
 
+
+``` go
+// 这个示例程序展示如何写基础单元测试
+package listing01
+
+import ( 
+   "net/http"
+   "testing"
+) 
+
+const checkMark = "\u2713"
+const ballotX = "\u2717"
+
+// TestDownload确认  http包的  Get函数可以下载内容
+func TestDownload(t *testing.T) { 
+   url := "http://www.goinggo.net/feeds/posts/default?alt=rss"
+   statusCode := 200
+
+   t.Log("Given the need to test downloading content.")
+   { 
+       t.Logf("\tWhen checking \"%s\" for status code \"%d\"",
+           url, statusCode)
+       { 
+           resp, err := http.Get(url)
+           if err != nil { 
+               t.Fatal("\t\tShould be able to make the Get call.",
+                   ballotX, err)
+           } 
+           t.Log("\t\tShould be able to make the Get call.",
+               checkMark)
+
+           defer resp.Body.Close()
+
+           if resp.StatusCode == statusCode { 
+               t.Logf("\t\tShould receive a \"%d\" status. %v",
+                   statusCode, checkMark)
+           } else { 
+               t.Errorf("\t\tShould receive a \"%d\" status. %v %v",
+                   statusCode, ballotX, resp.StatusCode)
+           } 
+       } 
+   } 
+} 
+```
+
+go test -v 运行测试，并提供冗余输出。
+Go语言的测试工具只会认为以_test.go结尾的文件是测试文件，然后查找里面的测试函数并执行。
 
 # 第十二章 反射
 
