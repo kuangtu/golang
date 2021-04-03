@@ -30,6 +30,10 @@ gnet内置了inbound 和 outbound 两个 buffers，基于 Ring-Buffer 原理实�
 
 # 3、开始使用
 
+用 `gnet` 来构建网络服务器是非常简单的，只需要实现 `gnet.EventHandler`接口然后把你关心的事件函数注册到里面，最后把它连同监听地址一起传递给 `gnet.Serve` 函数就完成了。在服务器开始工作之后，每一条到来的网络连接会在各个事件之间传递，如果你想在某个事件中关闭某条连接或者关掉整个服务器的话，直接在事件函数里把 `gnet.Action` 设置成 `Close` 或者 `Shutdown` 就行了。
+
+
+
 
 
 
