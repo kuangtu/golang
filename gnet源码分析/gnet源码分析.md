@@ -46,3 +46,85 @@ gnet内置了inbound 和 outbound 两个 buffers，基于 Ring-Buffer 原理实�
 
 ## 3.1 不带阻塞的echo服务器
 
+ [参见示例代码](gnet源码分析/echodemo/echodemo.go)：
+
+```go
+package main
+
+import (
+    "log"
+    "github.com/panjf2000/gnet"
+)
+
+type echoServer struct {
+    *gnet.EventServer
+}
+
+func (es *echoServer) React(frame [] byte, c gnet.Conn) (out []byte, action gnet.Action){
+    out = frame
+    return
+}
+
+func main() {
+    echo := new(echoServer)
+    log.Fatal(gnet.Serve(echo,"tcp://:9000", gnet.WithMulticore(true)))
+}
+```
+
+注册了一个 `EventHandler.React` 事件，主要的业务逻辑代码会写在这个事件方法里，这个方法会在服务器接收到客户端写过来的数据之时被调用。
+
+此时的输入参数已经是解码过后的一个完整的网络数据包，通常需要实现 `gnet` 的 [codec 接口](https://pkg.go.dev/github.com/panjf2000/gnet?tab=doc#ICodec)作为你自己的业务编解码器来处理 TCP 组包和分包的问题，如果你不实现那个接口的话，那么 `gnet` 将会使用[默认的 codec](https://pkg.go.dev/github.com/panjf2000/gnet?tab=doc#BuiltInFrameCodec)，这意味着在 `EventHandler.React` 被触发调用之时输入参数: `frame` 里存储的是所有网络数据：包括最新的以及还在 buffer 里的旧数据，然后处理输入数据（这里只是把数据 echo 回去）并且在处理完之后把需要输出的数据赋值给 `out` 变量并返回，接着输出的数据会经过编码，最后被写回客户端。
+
+**主要是分切片的数据，需要实现codec接口。**
+
+
+
+## 3.2 带阻塞逻辑的echo服务器
+
+[参见示例程序](gnet源码分析/blockechodemo/blockechodemo.go):
+
+```go
+package main
+
+import (
+    "log"
+    "time"
+
+    "github.com/panjf2000/gnet"
+    "github.com/panjf2000/gnet/pool/goroutine"
+)
+
+type echoServer struct {
+    //嵌入类型
+    *gnet.EventServer
+    pool *goroutine.Pool
+}
+
+func (es *echoServer) React(frame []byte, c gnet.Conn) (out []byte, action gnet.Action) {
+    //增加数据
+    data := append([]byte{}, frame...)
+    //通过独立的协程运行
+    // Use ants pool to unblock the event-loop.
+    _ = es.pool.Submit(func() {
+        //业务逻辑中有阻塞代码。放入到协程中运行
+        time.Sleep(1 * time.Second)
+        c.AsyncWrite(data)
+    })
+
+    return
+}
+
+func main() {
+    p := goroutine.Default()
+    defer p.Release()
+
+    echo := &echoServer{pool: p}
+    log.Fatal(gnet.Serve(echo, "tcp://:9000", gnet.WithMulticore(true)))
+}
+```
+
+
+
+
+
+但是要注意一点，如果你的服务器处理的流量足够的大，那么这种做法将会导致创建大量的 goroutines 极大地消耗系统资源，所以我一般建议你用 goroutine pool 来做 goroutines 的复用和管理，以及节省系统资源。
