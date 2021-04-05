@@ -128,3 +128,37 @@ func main() {
 
 
 但是要注意一点，如果你的服务器处理的流量足够的大，那么这种做法将会导致创建大量的 goroutines 极大地消耗系统资源，所以我一般建议你用 goroutine pool 来做 goroutines 的复用和管理，以及节省系统资源。
+
+
+## I/O事件
+gnet 目前支持的 I/O 事件如下：
+
+- EventHandler.OnInitComplete 当 server 初始化完成之后调用。
+- EventHandler.OnOpened 当连接被打开的时候调用。
+- EventHandler.OnClosed 当连接被关闭的之后调用。
+- EventHandler.React 当 server 端接收到从 client 端发送来的数据的时候调用。（**你的核心业务代码一般是写在这个方法里**）
+- EventHandler.Tick 服务器启动的时候会调用一次，之后就以给定的时间间隔定时调用一次，是一个定时器方法。
+- EventHandler.PreWrite 预先写数据方法，在 server 端写数据回 client 端之前调用。
+
+
+
+## 定时器
+
+`EventHandler.Tick` 会每隔一段时间触发一次，间隔时间你可以自己控制，设定返回的 `delay` 变量就行。
+
+定时器的第一次触发是在 gnet server 启动之后，如果你要设置定时器，别忘了设置 option 选项：`WithTicker(true)`。
+
+
+
+## 使用多核
+
+`gnet.WithMulticore(true)` 参数指定了 `gnet` 是否会使用多核来进行服务，如果是 `true` 的话就会使用多核，否则就是单核运行，利用的核心数一般是机器的 CPU 数量。
+
+
+
+## 内置的TCP流编解码器
+
+目前一共实现了 4 种常见的编解码器：LineBasedFrameCodec, DelimiterBasedFrameCodec, FixedLengthFrameCodec 和 LengthFieldBasedFrameCodec，基本上能满足大多数应用场景的需求了；
+
+而且 `gnet` 还允许用户实现自己的编解码器：只需要实现 [gnet.ICodec](https://pkg.go.dev/github.com/panjf2000/gnet?tab=doc#ICodec) 接口，并通过 functional options 替换掉内部默认的编解码器即可。
+
