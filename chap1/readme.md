@@ -1,4 +1,4 @@
-# 第1章  安装及介绍
+# 第1章  介绍
 
  [官网下载](https://golang.org/dl/) Go1.6版本，笔者在windows环境中安装，一路Next，然后在cmd中运行。
 
