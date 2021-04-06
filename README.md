@@ -2,7 +2,7 @@
 
 # Go语言学习笔记
 记录Go语言学习过程中的点点滴滴，分析部分优秀Go语言开源项目的代码，最后结合笔者的工作经验，对于Go语言在证券行情处理、协议实现等方面进行总结分享。
-** the more you share, the more you have **。
+**the more you share, the more you have**。
 
 # 目录
 
