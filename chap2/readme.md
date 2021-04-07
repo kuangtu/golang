@@ -134,3 +134,38 @@ func main(){
 
 ## 2.5 类型
 
+Go语言中类型转换分为强制转换和类型断言。
+
+在C/C++语言中，编译器可以隐式的把类型向上提升。但是Go语言中会报错，需要进行类型转换。
+
+### 2.5.1 强制类型转换
+
+通过type(a)这种形式强制类型转换，[比如程序](typeconv.go):
+
+```go
+package main
+
+import (
+    "fmt"
+)
+
+func main() {
+    var a float32 = 10
+    var d int = 3
+    
+    fmt.Println(a * d)
+}
+```
+
+​	编译报错，类型不匹配：
+
+![类型转换](jpg/类型转换.png)
+
+进行强制转换:
+
+```go
+ fmt.Println(a * float32(d))
+```
+
+### 2.5.2 类型断言
+
