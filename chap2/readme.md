@@ -169,3 +169,19 @@ func main() {
 
 ### 2.5.2 类型断言
 
+```go
+package main
+
+import "fmt"
+
+func main() {
+    var a interface{} =10
+    switch a.(type){
+    case int:
+            fmt.Println("int")
+    case float32:
+            fmt.Println("string")
+    }
+}
+```
+
