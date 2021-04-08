@@ -67,3 +67,24 @@ func main() {
 }
 ```
 
+
+
+## 字符串
+
+一个字符串是一个不可改变的字节序列。字符串可以包含任意的数据，包括byte值0，但是通常是用来包含人类可读的文本。文本字符串通常被解释为采用UTF8编码的Unicode码点（rune）序列。
+
+内置的len函数可以返回一个字符串中的字节数目（不是rune字符数目），索引操作s[i]返回第i个字节的字节值，i必须满足0 ≤ i< len(s)条件约束。
+
+```GO
+package main
+
+import (
+    "fmt"
+)
+
+func main() {
+    s1 := "hello world"
+    fmt.Println("the str len is:", len(s1))
+}
+```
+
