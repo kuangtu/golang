@@ -245,8 +245,6 @@ dict := map[int][]string{}
 
 ## 4.3.2 使用映射
 
-
-
 使用内置的delete函数可以删除元素：
 
 ```go
@@ -279,7 +277,7 @@ if value != "" {
 
 
 
-### 4.3.1 函数间传递映射
+### 4.3.3 函数间传递映射
 
 在函数间传递映射并不会制造出该映射的一个副本。当传递映射给一个函数，并对这个映射做了修改时，所有对这个映射的引用都会觉察到这个修改。
 
@@ -305,7 +303,7 @@ type Employee struct {
 var dilbert Employee
 ```
 
-结构体变量的成员可以通过点操作符访问.
+结构体变量的成员可以通过点操作符访问。
 
 结构体指针:
 
@@ -442,8 +440,6 @@ type Container struct {     // Container is the embedding struct
   c string
 }
 ```
-
-
 
 Container实例也包含了字段b，称为提升类型（*promoted* field），直接访问：
 
