@@ -2115,3 +2115,15 @@ Write(p []byte) (n int, err error)
 
 
 
+
+
+# 参考资料
+
+https://chai2010.cn/advanced-go-programming-book/ch1-basic/ch1-05-mem.html
+
+
+
+https://medium.com/technofunnel/understanding-golang-and-goroutines-72ac3c9a014d
+
+
+
