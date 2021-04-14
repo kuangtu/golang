@@ -77,7 +77,6 @@ import (
 ```
 
 
-
 ## 10. 5 包的匿名导入
 
 如果只是导入一个包而并不使用导入的包将会导致一个编译错误。
@@ -87,7 +86,6 @@ import (
 ```go
 import _ "image/png" // register PNG decoder
 ```
-
 
 
 ## 10.6  包和命名
@@ -137,11 +135,11 @@ $ go env -w GOPROXY=https://goproxy.cn,direct
 
 通过 go env，查看相应的配置：
 
-![go_env环境](C:\moxuansheng\workspace\golang\jpg\go_env环境.png)
+![go_env环境](jpg/go_env环境.png)
 
 可以看到相应的包缓存路径。有些github包安装如下。
 
-![包的位置](C:\moxuansheng\workspace\golang\jpg\包的位置.png)
+![包的位置]jpg/包的位置.png)
 
 
 
@@ -155,15 +153,15 @@ https://zhuanlan.zhihu.com/p/60703832
 
 是GO开发环境所设置的一个变量。历史版本的 go 语言开发时，需要将代码放在 GOPATH 目录的 src 文件夹下。go get 命令获取依赖，也会自动下载到 GOPATH 的 src 下。GOPATH设置如下：
 
-![gopath设置](C:\moxuansheng\workspace\golang\jpg\gopath设置.png)
+![gopath设置](jpg/gopath设置.png)
 
 通过go get进行包下载：
 
-![goget](C:\moxuansheng\workspace\golang\jpg\goget.png)
+![goget](jpg/goget.png)
 
 可以看到下载的数据包在GOPATH路径中：
 
-![goget_envpath](C:\moxuansheng\workspace\golang\jpg\goget_envpath.png)
+![goget_envpath](jpg/goget_envpath.png)
 
 （2）存在的问题
 
@@ -204,7 +202,7 @@ go mod init github/kuangtu/groupcache_test
 
 可以看到创建了文件go.mod：
 
-![goinit](C:\moxuansheng\workspace\golang\jpg\goinit.png)
+![goinit](jpg/goinit.png)
 
 文件内容如下：
 
@@ -216,7 +214,7 @@ go 1.16
 
 它记录了当前项目的模块信息，每一行都以一个关键词开头。在该目录下执行go get，下载依赖包：
 
-![go get pkg](C:\moxuansheng\workspace\golang\jpg\go get pkg.png)
+![go get pkg](jpg/go get pkg.png)
 
 再次查看go.mod文件：
 
