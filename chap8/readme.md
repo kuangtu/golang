@@ -260,3 +260,9 @@ func Runner(baton chan int) {
 有缓冲的通道（buffered channel）是一种在被接收前能存储一个或者多个值的通道。这种类 型的通道并不强制要求 goroutine 之间必须同时完成发送和接收。通道会阻塞发送和接收动作的 条件也会不同。
 
 只有在通道中没有要接收的值时，接收动作才会阻塞。只有在通道没有可用缓冲 区容纳被发送的值时，发送动作才会阻塞。
+
+
+
+
+
+https://medium.com/technofunnel/understanding-golang-and-goroutines-72ac3c9a014d
