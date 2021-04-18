@@ -436,3 +436,93 @@ func checkError(err error) {
 ```
 
 通过关键字``go``采用go-coroutine方式执行，完成“多线程”服务。
+
+
+
+### 14.3.3 超时设置
+
+socket读写时可以设置超时：
+
+```go
+func	(c	*TCPConn)	SetTimeout(nsec	int64)	os.Error
+```
+
+
+
+### 14.3.4 保活设置
+
+如果希望在没有数据时仍然能够保持连接，可以进行保活设置：
+
+```go
+func	(c	*TCPConn)	SetKeepAlive(keepalive	bool)	os.Error
+```
+
+
+
+## 14.4 UDP
+
+主要函数有：
+
+```go
+func	ResolveUDPAddr(net,	addr	string)	(*UDPAddr,	os.Error)
+func	DialUDP(net	string,	laddr,	raddr	*UDPAddr)	(c	*UDPConn,	err	os.Error)
+func	ListenUDP(net	string,	laddr	*UDPAddr)	(c	*UDPConn,	err	os.Error)
+func	(c	*UDPConn)	ReadFromUDP(b	[]byte)	(n	int,	addr	*UDPAddr,	err	os.Error
+func	(c	*UDPConn)	WriteToUDP(b	[]byte,	addr	*UDPAddr)	(n	int,	err	os.Error)
+```
+
+
+
+UDP方式的datetimeserver[程序为](udpdaytimeserver.go)：
+
+```go
+package main
+
+import(
+    "net"
+    "os"
+    "fmt"
+    "time"
+)
+
+func main() {
+
+    service := ":1200"
+
+    //解析TCP地址及端口
+    tcpAddr, err := net.ResolveUDPAddr("udp4", service)
+    checkError(err)
+    
+    //监听端口
+    listener, err := net.ListenUDP("udp", tcpAddr)
+    checkError(err)
+    
+    for {
+        handleClient(conn)
+    }
+    
+}
+
+func handleClient(conn *net.UDPConn) {
+    var buf [512]byte
+    _, addr, err := conn.ReadFromUDP(buf[0:])
+    
+    if err != nil {
+        return
+    }
+    
+    daytime := time.Now().String()
+    
+    conn.WriteToUDP([]byte(daytime), addr)
+}
+
+func checkError(err error) {
+    if err != nil {
+        fmt.Println(os.Stderr, "Fatal error: %s", err.Error())
+        os.Exit(1)
+    }
+
+```
+
+
+
