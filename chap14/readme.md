@@ -526,3 +526,25 @@ func checkError(err error) {
 
 
 
+## 14.5 Conn、PacketConn以及Listener类型
+
+单一的函数发送TCP或者UDP连接：
+
+```go
+func	Dial(net,	laddr,	raddr	string)	(c	Conn,	err	os.Error)
+```
+
+``net`` 字符串可以为“tcp"、"tcp4"、"udp"、"udp4"。
+
+单一的socket监听函数：
+
+```go
+func	Listen(net,	laddr	string)	(l	Listener,	err	os.Error)
+```
+
+
+
+## 14.6 RawSocket和IPConn类型
+
+Go语言运行创建原始套接字：
+
