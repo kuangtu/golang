@@ -576,7 +576,69 @@ Go语言运行创建原始套接字：
 
 可以基于特定规则方式进行发送：
 
-```html
+```
+3
+4 fred
+10 programmer
+6 liping
+7 analyst
+8 sureerat
+7 manager
+```
+
+先发送长度，再发送一条记录，记录中的字段标注长度。
+
+或者通过尾部的'\0'标识一个字段的结束：
+
+```
+3
+fred\0
+programmer\0
+liping\0
+analyst\0
+sureerat\0
+manager\0
+```
+
+### 14.7.1 抽象语法标记
+
+Go语言提供了ASN.1库【】，通过如下方法marshals和unmarshals数据：
+
+```go
+func	Marshal(val	interface{})	([]byte,	os.Error)
+func	Unmarshal(val	interface{},	b	[]byte)	(rest	[]byte,	err	os.Error)
+```
+
+示例程序如下：
+
+```go
+package main
+
+import(
+    "encoding/asn1"
+    "os"
+    "fmt"
+)
+
+func main() {
+
+    mdata, err := ans1.Marshal(13)
+    
+    var n int
+    
+    _, err1 := asn1.UnMarshal(mdata, &n)
+
+    checkError(err1)
+    
+    fmt.Println("After marshal/unmarshal: ", n)
+}
+
+
+func checkError(err error) {
+    if err != nil {
+        fmt.Println(os.Stderr, "Fatal error: %s", err.Error())
+        os.Exit(1)
+    }
 
 ```
 
