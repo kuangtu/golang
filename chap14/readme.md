@@ -642,3 +642,135 @@ func checkError(err error) {
 
 ```
 
+### 14.7.8 JSON
+
+JSON是JavaScript	Object	Notation。JSON可以序列化对象、数组和基本值。基本值包括：字符串、数字、布尔值和null值。
+
+```go
+package main
+
+import(
+    "os"
+    "fmt"
+    "encoding/json"
+)
+
+type Person struct {
+    Name Name
+    Email [] Email
+}
+
+type Name struct {
+    Family string
+    Personal string
+}
+
+type Email struct {
+    Kind string
+    Address string
+}
+
+
+func main() {
+    //结构体初始化
+    person := Person {
+            Name: Name{Family: "newmarch", Personal: "Jan"},
+            Email: []Email{Email{Kind: "home", Address: "Jan@newmarch.name"},
+                        Email{Kind: "work", Address: "j.newmarch@boxhill.edu.au"}
+                        }
+                    }
+    saveJSON("person.json", person)
+    
+}
+
+
+func saveJSON(fileName string, key interface{}) {
+    outFile, err := os.Create(fileName)
+    checkError(err)
+    encoder := json.NewEncoder(outFile)
+    err := encoder.Encode(key)
+    checkError(err)
+    outFile.Close()
+}
+
+func checkError(err error) {
+    if err != nil {
+        fmt.Println(os.Stderr, "Fatal error: %s", err.Error())
+        os.Exit(1)
+    }
+
+```
+
+
+
+反序列化过程：
+
+```go
+package main
+
+import(
+    "os"
+    "fmt"
+    "encoding/json"
+)
+
+type Person struct {
+    Name Name
+    Email [] Email
+}
+
+type Name struct {
+    Family string
+    Personal string
+}
+
+type Email struct {
+    Kind string
+    Address string
+}
+
+//绑定到Person对象
+func (p Person) String() String {
+    s := p.Name.Personal + " " + p.Name.Family
+    for _, v := range p.Email {
+        s += "\n" + v.Kind + ": " + v.Address
+    }
+    
+    return s
+}
+
+
+func main() {
+    var person Person
+    loadJSON("person.json", &person)
+    
+    fmt.Println("Person", person.String())
+    
+}
+
+func loadJSON(fileName string, key interface{}) {
+
+    inFile, err := os.Open(fileName)
+    checkError(err)
+    decoder := json.NewDecoder(inFile)
+    checkError(err)
+    inFile.Close()
+    
+}
+
+func checkError(err error) {
+    if err != nil {
+        fmt.Println(os.Stderr, "Fatal error: %s", err.Error())
+        os.Exit(1)
+    }
+
+```
+
+
+
+## 14.8 应用层协议
+
+主要内容：
+
+- 版本控制
+- 消息格式
