@@ -774,3 +774,17 @@ func checkError(err error) {
 
 - 版本控制
 - 消息格式
+- 数据格式
+
+
+
+### 14.8.1 UTF8编码
+
+Go语言中字符串使用UTF-8编码。每个字符是rune类型，该类型是Int32的别名，一个Unicode字符串可以是1、2或者4个字节。
+
+```go
+str	:=	"百度⼀下，你就知道"
+println("String	length",	len([]rune(str))) 
+println("Byte	length",	len(str))
+```
+
