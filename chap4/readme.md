@@ -368,6 +368,18 @@ type admin struct {
 
 为了初始化person，创建user结构类型，并赋给person字段。
 
+
+
+### 4.4.5结构体对齐
+
+类似C语言中的struct padding，编译器会进行优化处理，通过对齐的方式提升内存读取速度。
+
+And in Go “required alignment” is used. Its value is equal to the size of the memory required for the largest field in the structure.
+
+对齐的值是结构体中占用内存最大的字段。
+
+
+
 ## 4.5 JSON
 
 JSON是对JavaScript中各种类型的值——字符串、数字、布尔值和对象——Unicode本文编码。它可以用有效可读的方式表示第三章的基础数据类型和本章的数组、slice、结构体和map等聚合数据类型。

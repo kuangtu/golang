@@ -2151,3 +2151,20 @@ https://medium.com/technofunnel/understanding-golang-and-goroutines-72ac3c9a014d
 
 
 
+结构体：
+
+https://itnext.io/structure-size-optimization-in-golang-alignment-padding-more-effective-memory-layout-linters-fffdcba27c61 
+
+
+
+https://github.com/lunixbochs/struc
+
+https://www.golangprograms.com/go-language/struct.html
+
+https://itnext.io/creating-your-own-struct-field-tags-in-go-c6c86727eff
+
+
+
+String
+
+https://blog.golang.org/strings
