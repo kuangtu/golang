@@ -376,7 +376,66 @@ type admin struct {
 
 And in Go “required alignment” is used. Its value is equal to the size of the memory required for the largest field in the structure.
 
-对齐的值是结构体中占用内存最大的字段。
+要求对齐的值是结构体中占用的内存最大的字段的值。
+
+
+
+
+
+
+
+### 4.4.6 空结构体
+
+结构体类型没有字段，比如：
+
+```go
+type Q struct{}
+var q struct{}
+```
+
+宽度Width
+
+宽度描述了一个类型的实体所占用的存储字节数目。通过```unsafe.Sizeof()```方法获取类型的宽度。
+
+数组类型的宽度等于元素类型的宽度乘以数目。
+
+```go
+    var a [3]uint32
+    fmt.Println(unsafe.Sizeof(a)) // prints 12
+```
+
+
+
+空结构体宽度为0：
+
+```go
+var s struct{}
+fmt.Println(unsafe.Sizeof(s)) // prints 0
+```
+
+因为空结构体占用0个字节，跟在之后的类型不需要padding，因此如果一个结构体由空结构体组成，也不占用空间：
+
+```go
+type S struct {
+        A struct{}
+        B struct{}
+}
+var s S
+fmt.Println(unsafe.Sizeof(s)) // prints 0
+```
+
+
+
+遵循Go语言的正交性，空结构体是和其他类型相同的类型。
+
+```go
+var x [1000000000]struct{}
+fmt.Println(unsafe.Sizeof(x)) // prints 0
+```
+
+空结构体类型的切片也只占用切片头部的长度，背后的数组长度为0.
+
+
 
 
 
