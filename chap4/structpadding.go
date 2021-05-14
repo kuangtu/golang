@@ -21,6 +21,35 @@ type Foo3 struct {
     d bool
 }
 
+
+type Foo21 struct {
+    aaa int32 // 4
+    bbb int32 // 4
+    ccc int32 // 4
+}
+
+type Foo22 struct {
+    aaa bool // 1
+    bbb int32 // 4 (max)
+    ссс bool // 1 
+    ddd bool // 1
+}
+
+type Foo23 struct {
+    aaa bool // 1
+    ссс bool // 1 
+    ddd bool // 1
+}
+
+
+type Foo24 struct {
+    aaa bool
+    bbb int64
+    ссс bool
+    ddd bool
+}
+
+
 func main() {
     x1 := &Foo1{}
     y1 := Foo1{}
@@ -46,6 +75,24 @@ func main() {
     fmt.Println(unsafe.Sizeof(x3))
     fmt.Println(unsafe.Sizeof(y3))
     
-
+    y21 := Foo21{}
+    fmt.Println("struct padding")
+    fmt.Println(unsafe.Sizeof(y21))
+    
+    y22 := Foo22{}
+    fmt.Println("struct padding")
+    fmt.Println(unsafe.Sizeof(y22))
+    
+    y23 := Foo23{}
+    fmt.Println("struct padding")
+    fmt.Println(unsafe.Sizeof(y23))
+    
+    var y24 Foo24
+    y24.aaa = false
+    y24.bbb = 1
+    //y24.ccc = false
+    y24.ddd = false
+    fmt.Println(unsafe.Offsetof(y24.bbb))
+    fmt.Println(unsafe.Offsetof(y24.ddd))
     
 }

@@ -376,9 +376,11 @@ type admin struct {
 
 And in Go “required alignment” is used. Its value is equal to the size of the memory required for the largest field in the structure.
 
-要求对齐的值是结构体中占用的内存最大的字段的值。
+要求对齐的值是结构体中占用的内存最大的字段的值。也就是说，如果结构中只有int32字段，则“所需要的对齐方式”将为4个字节，并且如果同时有int32和int64，那么为8个字节。
 
 
+
+比如：
 
 
 
