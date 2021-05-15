@@ -283,7 +283,11 @@ func main() {
 
 
 
- 
+ ## 13.3 二进制编码
+
+ Go’s *encoding/*[*Binary*](https://golang.org/pkg/encoding/binary/) package
+
+Go语言encoding/Binary数据包
 
 ###  参考文件
 
