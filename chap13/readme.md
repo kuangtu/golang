@@ -287,10 +287,98 @@ func main() {
 
  Go’s *encoding/*[*Binary*](https://golang.org/pkg/encoding/binary/) package
 
-Go语言encoding/Binary数据包
+Go语言encoding/Binary数据包用于将数值编解码为二进制数据。可以通过多种方法将固定长度类型的数值进行编解码。
+
+并提供了大端、小端处理接口：```binary.LittleEndian and binary.BigEndian```。
+
+### 13.3.1 编解码方式
+
+按照不同的整数类型```Uint16\Uint32```等进行编解码：
+
+```go
+    buf := make([]byte, 10)
+    //ts := uint32(time.Now().Unix())
+    
+    binary.BigEndian.PutUint16(buf[0:], 0x0101)
+    binary.BigEndian.PutUint16(buf[2:], 0x0201)
+    binary.BigEndian.PutUint32(buf[4:], 0x0301)
+    binary.BigEndian.PutUint16(buf[8:], 0x0401)
+    
+    fmt.Printf("%x\n", buf)
+    
+    sensorID := binary.BigEndian.Uint16(buf[0:])
+    locID :=  binary.BigEndian.Uint16(buf[2:])
+    tstamp :=  binary.BigEndian.Uint32(buf[4:])
+    temp :=  binary.BigEndian.Uint16(buf[8:])
+    
+    fmt.Printf("sid: %0#x, locID %0#x ts: %0#x, temp:%d\n", sensorID, locID, tstamp, temp)
+```
+
+- ```binary.BigEndian.PutUint16``` 根据整数类型确定字节数组中的大小
+- 设置BigEndian或者LittleEndian。
+
+
+
+### 13.3.2 通过IO流编解码
+
+上面的示例中，逐个字段对数据包进行编码和解码，对于具有多个字段的较大数据包可能容易出错。可以通过IO接口中的`io.Reader` and `io.Writer` 编解码数据。
+
+（1）函数binary.Write(w [io](https://golang.org/pkg/io/).[Writer](https://golang.org/pkg/io/#Writer), o [ByteOrder](https://golang.org/pkg/encoding/binary/#ByteOrder), data interface{})
+
+上面的示例中定义数据包：
+
+```go
+type packet struct {
+    Sensid uint32
+    Locid  uint16
+    Tstamp uint32
+    Temp   int16
+}
+```
+
+
+
+```go
+func main() {
+    dataIn := packet {
+        Sensid: 1, Locid: 1233, Tstamp: 123452123, Temp: 12,
+    }
+    
+    buf := new(bytes.Buffer)
+    
+    err := binary.Write(buf, binary.BigEndian, dataIn)
+    
+    if err != nil {
+        fmt.Println(err)
+        return
+    }
+    
+    //Buffer长度
+    fmt.Printf("%d\n", buf.Len())
+    
+}
+```
+
+**需要注意的是结构体仅包含期望顺序的数字类型字段。** 数据必须是固定长度的。
+
+![binary.write](jpg/binary.write.png)
+
+
+
+如果包含了字符串类型，报错：```binary.Write: invalid type main.packet```.
+
+
+
+
+
+
 
 ###  参考文件
 
 [go语言文件操作](https://www.devdungeon.com/content/working-files-go)
 
 [JSON-to-Go类型定义](https://mholt.github.io/json-to-go/)
+
+[Golang bytes.Buffer 用法精述](https://blog.csdn.net/K346K346/article/details/94456479)
+
+[binary.Write](https://golang.org/pkg/encoding/binary/#example_Write)
