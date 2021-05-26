@@ -788,3 +788,66 @@ println("String	length",	len([]rune(str)))
 println("Byte	length",	len(str))
 ```
 
+## 14.9 Epoll方式
+
+通常Go语言的TCP连接的处理可以每一个连接启动一个goroutine去处理，因为goroutine相对线程消耗资源更少。但如果需要处理上百万个连接时，需要启动上百万个goroutine，对资源消耗仍然非常大。
+
+### 14.9.1 goroutine-per-connection模式
+
+对于每个连接启动给一个goroutine进行处理，基于C/S模式进行评估。
+
+[服务端代码为](thdechoserver.go)：
+
+```go
+package main
+
+import (
+    "net"
+    "fmt"
+    "io"
+    "io/ioutil"
+)
+
+func main() {
+    var connections []net.Conn
+    sock, err := net.Listen("tcp", "12345")
+    if err != nil {
+        return
+    }
+    
+    defer func() {
+        for _, conn := range connections {
+            conn.Close()
+        }
+    }()
+    
+    for {
+        conn, e := sock.Accept()
+        if e != nil {
+            if ne, ok := e.(net.Error); ok && ne.Temporary() {
+
+                continue
+            }
+        }
+        
+        go handleConn(conn)
+        
+        connections = append(connections, conn)
+    }
+    
+}
+
+func handleConn(conn net.Conn) {
+    io.Copy(ioutil.Discard, conn)
+    fmt.Println("handleConn")
+}
+```
+
+
+
+
+
+
+
+
+
