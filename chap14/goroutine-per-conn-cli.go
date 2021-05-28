@@ -3,16 +3,13 @@ package main
 import (
     "net"
     "fmt"
-    "io"
-    "io/ioutil"
     "flag"
-    "log"
     "time"
 )
 
 var (
-    ip := flag.String("ip", "127.0.0.1", "Server IP")
-    connections := flag.Int("conn", 1, "number of tcp connections")
+    ip = flag.String("ip", "127.0.0.1", "Server IP")
+    connections = flag.Int("conn", 1, "number of tcp connections")
 )
 
 func main() {
@@ -24,7 +21,7 @@ func main() {
     var conns []net.Conn
     
     for i := 0; i < *connections; i++   {
-        c, err := net.DailTimeout("tcp", addr, 10 *time.Second)
+        c, err := net.DialTimeout("tcp", addr, 10 *time.Second)
         if err != nil {
             fmt.Println("failed to connect", i, err)
         }
@@ -34,45 +31,30 @@ func main() {
         time.Sleep(time.Millisecond)
     }
     
-    def func() {
+    defer func() {
         for _, c := range conns {
             c.Close()
         }
     }()
     
-    fmt
-        
-    sock, err := net.Listen("tcp", "12345")
-    if err != nil {
-        return
+    fmt.Println("完成初始化 %d 连接", len(conns))
+    
+    tts := time.Second
+    
+    if *connections > 100 {
+        tts = time.Millisecond * 5
     }
     
-    defer func() {
-        for _, conn := range connections {
-            conn.Close()
+    for  {
+        for i := 0; i < len(conns); i++ {
+            time.Sleep(tts)
+            conn := conns[i]
+            conn.Write([]byte("hello world\r\n"))
         }
-    }()
-    
-    for {
-        conn, e := sock.Accept()
-        if e != nil {
-            if ne, ok := e.(net.Error); ok && ne.Temporary() {
-
-                continue
-            }
-        }
-        
-        go handleConn(conn)
-        
-        connections = append(connections, conn)
     }
     
 }
 
-func handleConn(conn net.Conn) {
-    io.Copy(ioutil.Discard, conn)
-    fmt.Println("handleConn")
-}
 
 
 
