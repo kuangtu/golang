@@ -49,3 +49,61 @@ func main() {
 
 
 
+
+
+## 15.3 工作原理
+
+对于http包中```ListenAndServe```整个过程，涉及到三个方面：
+
+- 如何监听端口；
+- 如何接收客户端请求？
+- 如果分配handler。
+
+底层处理是：初始化一个server对象，然后调用net.Listen("tcp", addr)，建立一个服务。Go语言中http包源代码为：
+
+```go
+func (srv *Server) Serve(l net.Listener) error {
+		var tempDelay time.Duration // how long to sleep on accept failure
+
+	ctx := context.WithValue(baseCtx, ServerContextKey, srv)
+	for {
+		rw, err := l.Accept()
+		if err != nil {
+			select {
+			case <-srv.getDoneChan():
+				return ErrServerClosed
+			default:
+			}
+			if ne, ok := err.(net.Error); ok && ne.Temporary() {
+				if tempDelay == 0 {
+					tempDelay = 5 * time.Millisecond
+				} else {
+					tempDelay *= 2
+				}
+				if max := 1 * time.Second; tempDelay > max {
+					tempDelay = max
+				}
+				srv.logf("http: Accept error: %v; retrying in %v", err, tempDelay)
+				time.Sleep(tempDelay)
+				continue
+			}
+			return err
+		}
+		connCtx := ctx
+		if cc := srv.ConnContext; cc != nil {
+			connCtx = cc(connCtx, rw)
+			if connCtx == nil {
+				panic("ConnContext returned nil")
+			}
+		}
+		tempDelay = 0
+		c := srv.newConn(rw)
+		c.setState(c.rwc, StateNew, runHooks) // before Serve can return
+		go c.serve(connCtx)
+	}
+```
+
+通过l.Accept()接收请求，然后创建一个srv.newConn(rw)新的连接，最后通过一个新的goroutine 服务该连接。完成高并发处理。
+
+
+
