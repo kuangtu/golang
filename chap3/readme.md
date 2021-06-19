@@ -48,7 +48,7 @@ func main() {
 
 
 
-## 字符串
+## 3.4 字符串
 
 一个字符串是一个不可改变的字节序列。字符串可以包含任意的数据，包括byte值0，但是通常是用来包含人类可读的文本。文本字符串通常被解释为采用UTF8编码的Unicode码点（rune）序列。
 
@@ -66,6 +66,52 @@ func main() {
     fmt.Println("the str len is:", len(s1))
 }
 ```
+
+## 3.5 byte类型
+
+byte 是 uint8 的别名，在所有方面都等同于 uint8。
+
+```golang
+type byte = uint8
+```
+
+byte类型初始化：
+
+```golang
+    var b byte
+    b = 10
+    fmt.Println(b)
+    
+    a := [...]byte{0,1,2,3,4}
+    fmt.Println(a)
+```
+
+打印出来的也是uint8的值：
+
+![byte初始化输出](jpg/byte初始化输出.png)
+
+### 3.5.1 byte数组转为string类型
+
+将byte数组转发字符串：
+
+```go
+    a := []byte{0,1,2,3,4}
+    fmt.Println(a)
+    stra := BytesToString(a)
+    //因为是不可显示的，因此输出为
+    fmt.Println(stra)
+    
+    b := []byte{48,49,50,51,52}
+    fmt.Println(b)
+    strb := BytesToString(b)
+    fmt.Println(strb)
+```
+
+byte数组中元素值为0~4，转为字符串之后输出是控制字符。初始化为48~52之后，字符串输出的是0~4.
+
+![byte字符串输出](jpg/byte字符串输出.png)
+
+### 3.5.2 string类型转为byte数组
 
 ## 3.4 运算符优先级
 
@@ -87,3 +133,4 @@ Precedence    Operator
     2             &&
     1             ||
 ```
+
