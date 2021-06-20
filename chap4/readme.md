@@ -439,7 +439,9 @@ fmt.Println(unsafe.Sizeof(x)) // prints 0
 
 
 
+### 4.4.1 结构体转为byte数组
 
+在网络编程时通常根据会话协议，发送和接收消息体，完成用户验证
 
 ## 4.5 JSON
 
@@ -538,4 +540,12 @@ func (base Base) Describe() string {
 ```go
 fmt.Println(cc.Describe())
 ```
+
+
+
+
+
+## 4.8 参考
+
+[数组、字符串和切片](https://chai2010.gitbooks.io/advanced-go-programming-book/content/ch1-basic/ch1-03-array-string-and-slice.html)
 
