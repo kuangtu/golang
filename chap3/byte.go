@@ -29,5 +29,5 @@ func main() {
     var str2 string
     str2 = "世界你好"
     byteString2 := []byte(str2)
-    fmt.Printf("% x", byteString2)
+    fmt.Printf("%X", byteString2)
 }

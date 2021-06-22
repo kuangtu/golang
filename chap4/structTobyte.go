@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 )
 
@@ -47,6 +48,12 @@ type LoginMsg struct {
 	Tail         MsgTail
 }
 
+func putBuffer(i interface{}) (b bytes.Buffer, chksum uint32) {
+	b.Write([]byte("hello"))
+	chksum = 5
+	return
+}
+
 func main() {
 	fmt.Println("test")
 	var mystr []byte
@@ -91,4 +98,7 @@ func main() {
 	//计算消息的CHECKSUM
 
 	//将结构体放入到byteBuferr中
+	b, chksum := putBuffer(loginMsg)
+	fmt.Println(b.String())
+	fmt.Println(chksum)
 }

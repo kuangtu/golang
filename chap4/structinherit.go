@@ -10,6 +10,7 @@ func (p *Polygon) NSides() int {
 	return p.Sides
 }
 
+//继承了匿名结构体的方法Nsides()
 type Triangle struct {
 	Polygon
 }
