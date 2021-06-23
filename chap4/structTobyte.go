@@ -49,8 +49,15 @@ type LoginMsg struct {
 }
 
 func putBuffer(i interface{}) (b bytes.Buffer, chksum uint32) {
-	b.Write([]byte("hello"))
-	chksum = 5
+	switch v := i.(type) {
+	case LoginMsg:
+		fmt.Println("it's login message", v.AppVerID)
+		for index := 0; index < MsgType_LEN; index++ {
+			b.WriteByte(byte(v.Header.MsgType[index]))
+		}
+		chksum = 5
+	}
+
 	return
 }
 
