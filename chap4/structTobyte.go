@@ -39,7 +39,7 @@ type MsgTail struct {
 }
 
 type LoginMsg struct {
-	Header       MsgHeader
+	MsgHeader
 	SenderCompID [SenderCompID_LEN]byte
 	TargetCompID [TargetCompID_LEN]byte
 	HeartBtInt   uint16
@@ -52,9 +52,14 @@ func putBuffer(i interface{}) (b bytes.Buffer, chksum uint32) {
 	switch v := i.(type) {
 	case LoginMsg:
 		fmt.Println("it's login message", v.AppVerID)
-		for index := 0; index < MsgType_LEN; index++ {
-			b.WriteByte(byte(v.Header.MsgType[index]))
-		}
+		slicetmp := v.AppVerID[:]
+		b.Write(slicetmp)
+		//写入HeartBtInt
+
+		// for index := 0; index < MsgType_LEN; index++ {
+		// 	b.WriteByte(byte(v.MsgType[index]))
+
+		// }
 		chksum = 5
 	}
 
@@ -96,12 +101,12 @@ func main() {
 	}
 
 	//填充消息头部
-	loginMsg.Header.MsgType = [4]byte{'M', '0', '0', '1'}
-	loginMsg.Header.SendingTtime = 1234
-	loginMsg.Header.MsgSeq = Pkt_MsgSeq
-	loginMsg.Header.BodyLength = LoginMsg_BODY_LEN
+	loginMsg.MsgType = [4]byte{'M', '0', '0', '1'}
+	loginMsg.SendingTtime = 1234
+	loginMsg.MsgSeq = Pkt_MsgSeq
+	loginMsg.BodyLength = LoginMsg_BODY_LEN
 
-	fmt.Println("the body len is:", loginMsg.Header.BodyLength)
+	fmt.Println("the body len is:", loginMsg.BodyLength)
 	//计算消息的CHECKSUM
 
 	//将结构体放入到byteBuferr中
