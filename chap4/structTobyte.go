@@ -14,17 +14,24 @@ func GetPktChkSum(chksum CheckSum) uint32 {
 }
 
 const (
+	//消息字符串填充
+	SenderCompID     = "CSI"
+	TargetCompID     = "SSE"
+	LOGIN_MSGTYPE    = "S001"
 	MsgType_LEN      = 4
 	SenderCompID_LEN = 32
 	TargetCompID_LEN = 32
 	AppVerID_LEN     = 8
+	//消息体头部长度
+	MsgHeader_LEN = 24
 	//消息体长度
-	MsgHeader_LEN     = 24
 	LoginMsg_BODY_LEN = 15
+	LOGINMSG_TAIL_LEN = 4
 )
 
 var (
 	Pkt_MsgSeq uint64 = 1
+	HeartBtInt uint16 = 10
 )
 
 type MsgHeader struct {
@@ -66,39 +73,63 @@ func putBuffer(i interface{}) (b bytes.Buffer, chksum uint32) {
 	return
 }
 
-func main() {
-	fmt.Println("test")
-	var mystr []byte
-	mystr = []byte("M001")
-	loginMsg := LoginMsg{}
+func initLoginMsg(loginMsg *LoginMsg) {
 
-	//填充发送ID
-	var index int
-	for index = 0; index < SenderCompID_LEN; index++ {
-		loginMsg.SenderCompID[index] = ' '
+	//按照接口规范初始化char字符串类型，通过空格填充
+	for i, c := range loginMsg.SenderCompID {
+		loginMsg.SenderCompID[i] = ' '
 	}
-	mystr = []byte("csisender")
-	for i, x := range mystr {
-		loginMsg.SenderCompID[i] = x
+
+	for i, c := range loginMsg.TargetCompID {
+		loginMsg.TargetCompID[i] = ' '
+	}
+
+	for i, c := range loginMsg.AppVerID {
+		loginMsg.AppVerID = ' '
+	}
+
+}
+
+func setLoginMsgBody(loginMsg *LoginMsg) {
+	//填充发送ID
+	var setStr []byte
+	setStr = []byte(SenderCompID)
+	for i, c := range setStr {
+		loginMsg.SenderCompID[i] = c
 	}
 
 	//填充目标ID
-	for index = 0; index < TargetCompID_LEN; index++ {
-		loginMsg.TargetCompID[index] = ' '
-	}
-	mystr = []byte("csitarget")
-	for i, x := range mystr {
-		loginMsg.TargetCompID[i] = x
+	setStr = []byte(TargetCompID)
+	for i, c := range setStr {
+		loginMsg.TargetCompID[i] = c
 	}
 
-	//填充APPVerID
-	for index = 0; index < AppVerID_LEN; index++ {
-		loginMsg.AppVerID[index] = ' '
+	//填充APP
+	setStr = []byte(AppVerID)
+	for i, c := range setStr {
+		loginMsg.AppVerID[i] = c
 	}
-	mystr = []byte("1.00")
-	for i, x := range mystr {
-		loginMsg.AppVerID[i] = x
-	}
+
+	//填充心跳周期
+	loginMsg.HeartBtInt = HeartBtInt
+}
+
+func setLoginMsgHeader(loginMsg *LoginMsg) {
+
+}
+
+func main() {
+	//创建登录消息
+	loginMsg := LoginMsg{}
+
+	//消息初始化
+	initLoginMsg(&loginMsg)
+	fmt.Printf("%v", loginMsg)
+
+	//填充字段
+	setLoginMsgBody(&loginMsg)
+
+	//填充消息头部
 
 	//填充消息头部
 	loginMsg.MsgType = [4]byte{'M', '0', '0', '1'}

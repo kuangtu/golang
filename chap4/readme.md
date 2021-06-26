@@ -553,9 +553,8 @@ fmt.Println(cc.Describe())
 
 
 
-
-
 ## 4.8 参考
 
 [数组、字符串和切片](https://chai2010.gitbooks.io/advanced-go-programming-book/content/ch1-basic/ch1-03-array-string-and-slice.html)
 
+https://developpaper.com/six-lines-of-code-to-quickly-solve-the-golang-tcp-packet-sticking-problem/
