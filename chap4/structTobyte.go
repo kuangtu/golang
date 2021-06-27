@@ -1,7 +1,7 @@
 package main
 
 import (
-	"bytes"
+	"encoding/binary"
 	"fmt"
 )
 
@@ -18,15 +18,19 @@ const (
 	SenderCompID     = "CSI"
 	TargetCompID     = "SSE"
 	LOGIN_MSGTYPE    = "S001"
+	AppVerID         = "1.00"
 	MsgType_LEN      = 4
 	SenderCompID_LEN = 32
 	TargetCompID_LEN = 32
 	AppVerID_LEN     = 8
 	//消息体头部长度
-	MsgHeader_LEN = 24
+	MSGHEADER_LEN = 24
 	//消息体长度
-	LoginMsg_BODY_LEN = 15
+	LOGINMSG_BODY_LEN = 74
 	LOGINMSG_TAIL_LEN = 4
+	UINT64_LEN        = 8
+	UINT32_LEN        = 4
+	UINT16_LEN        = 2
 )
 
 var (
@@ -35,7 +39,7 @@ var (
 )
 
 type MsgHeader struct {
-	MsgType      [4]byte
+	MsgType      [MsgType_LEN]byte
 	SendingTtime uint64
 	MsgSeq       uint64
 	BodyLength   uint32
@@ -51,41 +55,22 @@ type LoginMsg struct {
 	TargetCompID [TargetCompID_LEN]byte
 	HeartBtInt   uint16
 	AppVerID     [AppVerID_LEN]byte
-	CheckSum     uint32
-	Tail         MsgTail
-}
-
-func putBuffer(i interface{}) (b bytes.Buffer, chksum uint32) {
-	switch v := i.(type) {
-	case LoginMsg:
-		fmt.Println("it's login message", v.AppVerID)
-		slicetmp := v.AppVerID[:]
-		b.Write(slicetmp)
-		//写入HeartBtInt
-
-		// for index := 0; index < MsgType_LEN; index++ {
-		// 	b.WriteByte(byte(v.MsgType[index]))
-
-		// }
-		chksum = 5
-	}
-
-	return
+	MsgTail
 }
 
 func initLoginMsg(loginMsg *LoginMsg) {
 
 	//按照接口规范初始化char字符串类型，通过空格填充
-	for i, c := range loginMsg.SenderCompID {
+	for i, _ := range loginMsg.SenderCompID {
 		loginMsg.SenderCompID[i] = ' '
 	}
 
-	for i, c := range loginMsg.TargetCompID {
+	for i, _ := range loginMsg.TargetCompID {
 		loginMsg.TargetCompID[i] = ' '
 	}
 
-	for i, c := range loginMsg.AppVerID {
-		loginMsg.AppVerID = ' '
+	for i, _ := range loginMsg.AppVerID {
+		loginMsg.AppVerID[i] = ' '
 	}
 
 }
@@ -115,6 +100,76 @@ func setLoginMsgBody(loginMsg *LoginMsg) {
 }
 
 func setLoginMsgHeader(loginMsg *LoginMsg) {
+	//填充消息类型
+	var setStr []byte
+	setStr = []byte(LOGIN_MSGTYPE)
+	for i, c := range setStr {
+		loginMsg.MsgType[i] = c
+	}
+
+	//填充消息序号
+	loginMsg.MsgSeq = Pkt_MsgSeq
+	Pkt_MsgSeq = Pkt_MsgSeq + 1
+
+	//填充发送时间
+	//获取当前时间
+	loginMsg.SendingTtime = 1024
+
+	//消息体长度
+	loginMsg.BodyLength = LOGINMSG_BODY_LEN
+}
+
+func setLoginMsgTail(loginMsg *LoginMsg, chksum uint32) {
+	//填充消息消息尾部校验码
+	loginMsg.CheckSum = chksum
+}
+
+func doCalChkSum(buffer []byte, len uint32) uint32 {
+	var chkSum uint8
+	var i uint32
+	for i = 0; i < len; i++ {
+		chkSum += uint8(buffer[i])
+	}
+
+	return uint32(chkSum)
+}
+
+func calLogMsgChkSum(loginMsg *LoginMsg) ([]byte, uint32) {
+	//创建byte slicetmp
+	var slicetmp []byte
+	b := make([]byte, MSGHEADER_LEN+LOGINMSG_BODY_LEN+LOGINMSG_TAIL_LEN)
+	//消息头部放入到buffer中
+	//消息类型
+	slicetmp = loginMsg.MsgType[:]
+	copy(b, slicetmp)
+	//消息时间
+	binary.BigEndian.PutUint64(b[MsgType_LEN:], loginMsg.SendingTtime)
+	//消息序号
+	binary.BigEndian.PutUint64(b[(MsgType_LEN+UINT64_LEN):], loginMsg.MsgSeq)
+	//消息体长度
+	binary.BigEndian.PutUint32(b[(MsgType_LEN+UINT64_LEN+UINT64_LEN):], loginMsg.BodyLength)
+
+	//消息体写入
+	//发送ID
+	slicetmp = loginMsg.SenderCompID[:]
+	copy(b[(MsgType_LEN+UINT64_LEN+UINT64_LEN+UINT32_LEN):], slicetmp)
+	//目标ID
+	slicetmp = loginMsg.TargetCompID[:]
+	copy(b[(MsgType_LEN+UINT64_LEN+UINT64_LEN+UINT32_LEN+SenderCompID_LEN):], slicetmp)
+	//心跳间隔
+	binary.BigEndian.PutUint16(
+		b[(MsgType_LEN+UINT64_LEN+UINT64_LEN+UINT32_LEN+SenderCompID_LEN+TargetCompID_LEN):],
+		loginMsg.HeartBtInt)
+	//APPver
+	slicetmp = loginMsg.AppVerID[:]
+	copy(b[(MsgType_LEN+UINT64_LEN+UINT64_LEN+UINT32_LEN+SenderCompID_LEN+TargetCompID_LEN+UINT16_LEN):], slicetmp)
+
+	//计算校验码
+	chksum := doCalChkSum(b, MSGHEADER_LEN+LOGINMSG_BODY_LEN)
+	//校验码写入到buffer中
+	binary.BigEndian.PutUint32(b[(MSGHEADER_LEN+LOGINMSG_BODY_LEN):], chksum)
+
+	return b, chksum
 
 }
 
@@ -130,18 +185,11 @@ func main() {
 	setLoginMsgBody(&loginMsg)
 
 	//填充消息头部
+	setLoginMsgHeader(&loginMsg)
 
-	//填充消息头部
-	loginMsg.MsgType = [4]byte{'M', '0', '0', '1'}
-	loginMsg.SendingTtime = 1234
-	loginMsg.MsgSeq = Pkt_MsgSeq
-	loginMsg.BodyLength = LoginMsg_BODY_LEN
+	//计算校验码，并放入到byte数组中用于socket发送
+	buffer, chksum := calLogMsgChkSum(&loginMsg)
 
-	fmt.Println("the body len is:", loginMsg.BodyLength)
-	//计算消息的CHECKSUM
-
-	//将结构体放入到byteBuferr中
-	b, chksum := putBuffer(loginMsg)
-	fmt.Println(b.String())
-	fmt.Println(chksum)
+	fmt.Println("the checksum is:", chksum)
+	fmt.Println("the packet buffer is:", buffer)
 }
