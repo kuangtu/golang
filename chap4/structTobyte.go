@@ -191,5 +191,5 @@ func main() {
 	buffer, chksum := calLogMsgChkSum(&loginMsg)
 
 	fmt.Println("the checksum is:", chksum)
-	fmt.Println("the packet buffer is:", buffer)
+	fmt.Print("the packet buffer is:", buffer)
 }

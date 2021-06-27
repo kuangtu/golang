@@ -439,15 +439,116 @@ fmt.Println(unsafe.Sizeof(x)) // prints 0
 
 空结构体类型的切片也只占用切片头部的长度，背后的数组长度为0.
 
-
-
-
-
 ### 4.4.7 结构体转为byte数组
 
 在网络编程时通常根据会话协议，发送和接收消息体，完成用户验证。通过定义消息结构体，转换为byte二进制数据之后发送到服务器。可以通过bytes.Buffer将结构体中各成员变量放置到buffer中。
 
-假设结构体为：
+假设消息结构体由消息头和消息体组成，定义如下：
+
+```go
+type MsgHeader struct {
+	MsgType      [4]byte
+	SendingTtime uint64
+	MsgSeq       uint64
+	BodyLength   uint32
+}
+```
+
+消息类型的长度为4字节，发送时间字段长度为8字节，消息序号字段长度为8字节，消息长度字段为4字节。一共长度为：24字节。
+
+消息体定义如下：
+
+```go
+type LoginMsg struct {
+	MsgHeader
+	SenderCompID [3]byte
+	TargetCompID [3]byte
+	HeartBtInt   uint16
+	AppVerID     [4]byte
+}
+```
+
+LoginMsg可以直接访问MsgHeader中的成员。消息体中发送ID字段长度为3，目标ID字段长度为3，心跳字段长度为2，应用版本字段长度为4，一共12个字节。整个LoginMsg消息体长度为36个字节。
+
+定义bytes.Buffer变量，将结构体中的字节数组直接写入，对于整数类型，可以选择不同“大端”或者“小端“方式进行写入。
+
+初始化消息结构体：
+
+```go
+	var loginMsg LoginMsg
+	loginMsg.MsgType = [4]byte{'S', '0', '0', '1'}
+	loginMsg.SendingTtime = 1
+	loginMsg.MsgSeq = 2
+	loginMsg.BodyLength = 12
+	loginMsg.SenderCompID = [3]byte{'M', 'M', 'M'}
+	loginMsg.TargetCompID = [3]byte{'S', 'S', 'S'}
+	loginMsg.HeartBtInt = 3
+	loginMsg.AppVerID = [4]byte{'1', '.', '0', '0'}
+```
+
+创建bytes.Buffer将结构体中的字段写入：
+
+```go
+	buf := new(bytes.Buffer)
+	//写入消息类型，
+	buf.Write(loginMsg.MsgType[:])
+```
+
+**需要注意的是：**buf.write方法参数为[]byte序列，如果传入loginMsg.MsgType，报错：
+
+![结构体转byte参数错误](jpg/结构体转byte参数错误.png)
+
+因为loginMsg.MsgType是字节数组。需要通过[:]创建一个切片。写入其他字段：
+
+```go
+	buf := new(bytes.Buffer)
+	//写入消息类型，
+	buf.Write(loginMsg.MsgType[:])
+	//按照大端写入发送时间
+	binary.Write(buf, binary.BigEndian, loginMsg.SendingTtime)
+	//写入消息序号
+	binary.Write(buf, binary.BigEndian, loginMsg.MsgSeq)
+	//写入消息体长度
+	binary.Write(buf, binary.BigEndian, loginMsg.BodyLength)
+	//写入发送ID
+	buf.Write(loginMsg.SenderCompID[:])
+	//写入目标ID
+	buf.Write(loginMsg.TargetCompID[:])
+	//写入心跳时间
+	binary.Write(buf, binary.BigEndian, loginMsg.HeartBtInt)
+	//写入版本信息
+	buf.Write(loginMsg.AppVerID[:])
+```
+
+其中，对于整数类型的字段，可以通过```binary```包中大端或者小端的方式写入。
+
+最后将byte序列写入到文件中：
+
+```go
+	//将这些byte数据写入到文件中
+	f, err := os.Create("struct.bin")
+	if err != nil {
+		fmt.Println("open file error.")
+	}
+	defer f.Close()
+	n, err := f.Write(buf.Bytes())
+	if err != nil {
+		fmt.Println("write file failed.")
+	}
+	fmt.Println("write file len is:", n)
+```
+
+然后我们通过十六进制编辑器打开该二进制文件。笔者通过wxHexEditor：
+
+![二进制文件数据](jpg/二进制文件数据.png)
+
+可以发现：前四个字节十六进制表示为53、30、30、31。根据ASCII码表，53表示”S“，30表示”0“，31表示”1“。
+
+后8个字节位：00 00 00 00 00 00 00 01，SendingTtime字段类型为uint64，共计8个字节，按照大端方式表示。
+
+
+
+
 
 
 
