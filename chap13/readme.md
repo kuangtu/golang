@@ -319,7 +319,7 @@ Go语言encoding/Binary数据包用于将数值编解码为二进制数据。可
 
 
 
-### 13.3.2 通过IO流编解码
+### 13.3.2 通过IO流编码
 
 上面的示例中，逐个字段对数据包进行编码和解码，对于具有多个字段的较大数据包可能容易出错。可以通过IO接口中的`io.Reader` and `io.Writer` 编解码数据。
 
@@ -366,6 +366,57 @@ func main() {
 
 
 如果包含了字符串类型，报错：```binary.Write: invalid type main.packet```.
+
+
+
+### 13.3.3 通过IO流解码
+
+上述的列子中，通过write函数向buffer中写入数据。对于字节流可以通过Read函数读取字节到指定的数据类型。
+
+假设结构体为：
+
+```go
+type data struct {
+	A      uint32
+	B      uint16
+	Mytype [3]byte
+}
+```
+
+一共9个字节的长度。假设对应的字节流为：
+
+```go
+	b := []byte{0x01, 0x02, 0x02, 0x02, 0x02, 0x03, 0x01, 0x02, 0x03}
+```
+
+可以通过binary包中的Read方法读取字节流中的数据，填充结构体中的字段值。
+
+```go
+	buf := bytes.NewReader(b)
+	fmt.Println("the reader len is:", buf.Len())
+
+	var mydata data
+	//直接读取到结构体中
+	err := binary.Read(buf, binary.BigEndian, &mydata)
+	if err != nil {
+		fmt.Println("read data structure err")
+	}
+
+	fmt.Printf("%x\n", mydata.A)
+	fmt.Printf("%x\n", mydata.B)
+	fmt.Printf("%x\n", mydata.Mytype)
+	fmt.Println("the reader len is:", buf.Len())
+```
+
+运行程序输出结果：
+
+![bin_read结果](jpg/bin_read结果.png)
+
+对于B字段，数据类型为uint16，字节序列数据为0x02, 0x03，按照大端格式读取，得到203。
+
+另外，需要注意的是，如果结构体中变量为小写字母开头，对外面的包不可见，会报错：
+
+panic: SetUint using value obtained using unexported field。
 
 
 
