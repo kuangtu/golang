@@ -367,7 +367,67 @@ func main() {
 
 如果包含了字符串类型，报错：```binary.Write: invalid type main.packet```.
 
+根据上面的约束，可以将字段为固定长度的结构体写入到buf中。假设结构体为:
 
+```go
+type MsgHeader struct {
+	MsgType      [4]byte
+	SendingTtime uint64
+	MsgSeq       uint64
+	BodyLength   uint32
+}
+
+type MsgTail struct {
+	CheckSum uint32
+}
+
+//登录消息
+type LoginMsg struct {
+	MsgHeader
+	SenderCompID [32]byte
+	TargetCompID [32]byte
+	HeartBtInt   uint16
+	AppVerID     [8]byte
+	MsgTail
+}
+```
+
+初始化结构体然后写入到buf中：
+
+```go
+//初始化结构体消息
+func initMsg(loginMsg *LoginMsg) {
+	loginMsg.CheckSum = 512
+	loginMsg.SendingTtime = 1
+}
+
+func main() {
+	loginMsg := &LoginMsg{}
+	initMsg(loginMsg)
+
+	buf := new(bytes.Buffer)
+	binary.Write(buf, binary.BigEndian, loginMsg)
+	fmt.Println("the binary buf size:", buf.Len())
+	fmt.Printf("%x", buf)
+
+}
+```
+
+消息体最后的字段```CheckSum```，赋值512，十六进制表示为：0x200。运行程序输出buf中的字节内容：
+
+![bin_write结果](jpg/bin_write结果.png)
+
+可以看到buf中最后的的字节位0200（大端方式）。如果按照小端方式写入：
+
+```go
+binary.Write(buf, binary.LittleEndian, loginMsg)
+```
+
+运行程序输出buf中的字节内容：
+
+![bin_write结果小端](jpg/bin_write结果小端.png)
+
+最后的序列为：0x00020000，最先读到的是低字节位，则表示的值为：0x0200。
 
 ### 13.3.3 通过IO流解码
 
@@ -418,7 +478,7 @@ type data struct {
 
 panic: SetUint using value obtained using unexported field。
 
-
+​	
 
 
 
