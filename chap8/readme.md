@@ -263,6 +263,42 @@ func Runner(baton chan int) {
 
 
 
+## 8.5 生产者消费者模式
+
+可以通过channel方便地实现经典的生产者、消费者模式。
+
+生产者将数据写入到管道，消费者从管道读取数据。
+
+```go
+func ProducerData(i int) int {
+	fmt.Println("sleep..")
+	time.Sleep(5 * time.Second)
+	return i + 1
+}
+func main() {
+	//创建管道
+	data := make(chan int)
+
+	//每隔5秒钟生产一个数据
+	go func() {
+		var i = 0
+		for {
+			i = ProducerData(i)
+			data <- i
+		}
+	}()
+
+	//消费者从管道中取出
+	for i := range data {
+		fmt.Printf("i=%v\n", i)
+	}
+}
+```
+
+
+
+匿名函数调用ProducerData函数
+
 
 
 https://medium.com/technofunnel/understanding-golang-and-goroutines-72ac3c9a014d
