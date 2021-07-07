@@ -267,6 +267,8 @@ func Runner(baton chan int) {
 
 可以通过channel方便地实现经典的生产者、消费者模式。
 
+### 8.5.1 实现1
+
 生产者将数据写入到管道，消费者从管道读取数据。
 
 ```go
@@ -297,7 +299,55 @@ func main() {
 
 
 
-匿名函数调用ProducerData函数
+匿名函数调用ProducerData函数，向管道中间隔接入数据。main函数中消费者从管道中读取。
+
+### 8.5.2 实现2
+
+也可以将生产者和消费者均通过goroutine启动，main主goroutine等待结束。
+
+```go
+
+func producer(queue chan string, waitGroup *sync.WaitGroup) {
+	for i := 0; i < 10; i++ {
+		fmt.Println("producer string item:", (i + 1))
+		queue <- fmt.Sprintf("item %d", (i + 1))
+		time.Sleep(time.Second)
+	}
+
+	//关闭channel
+	close(queue)
+	waitGroup.Done()
+}
+
+func consumer(queue chan string, waitGroup *sync.WaitGroup) {
+	for val := range queue {
+		fmt.Println("consuming the :", val)
+	}
+
+	waitGroup.Done()
+}
+
+func main() {
+	fmt.Println("producer and consumer demo")
+	queue := make(chan string)
+	var waitGroup sync.WaitGroup
+	waitGroup.Add(2)
+
+	go producer(queue, &waitGroup)
+	go consumer(queue, &waitGroup)
+
+	//等待goroutine结束
+	waitGroup.Wait()
+	fmt.Println("finished...")
+}
+
+```
+
+### 8.5.3 实现3
+
+生产者消费者模式运行过程中，如果碰到Ctrl-C信号程序直接退出。可以增加对于Ctrl-C操作系统信号的处理。
+
+
 
 
 
