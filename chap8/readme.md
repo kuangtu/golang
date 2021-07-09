@@ -408,8 +408,16 @@ func main() {
 
 
 
+## 8.6 goroutine执行顺序
 
+当多个goroutine执行时，类似“多线程”方式，启动执行的顺序不确定。
 
-
+### 8.6.1
 
 https://medium.com/technofunnel/understanding-golang-and-goroutines-72ac3c9a014d
+
+
+
+
+
+https://medium.com/@fonseka.live/how-to-maintain-the-order-of-go-routines-117a5be86c4f
