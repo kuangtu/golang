@@ -412,7 +412,196 @@ func main() {
 
 当多个goroutine执行时，类似“多线程”方式，启动执行的顺序不确定。
 
-### 8.6.1
+### 8.6.1 函数顺序执行
+
+假设三个function，每个执行3秒。
+
+```go
+
+func FirstFunc() {
+
+	fmt.Println("start exec first function")
+	time.Sleep(3 * time.Second)
+	fmt.Println("finish exec first function")
+
+}
+
+func SecondFunc() {
+	fmt.Println("start exec second function")
+	time.Sleep(3 * time.Second)
+	fmt.Println("finish exec second function")
+}
+
+func ThrdFunc() {
+	fmt.Println("start exec third function")
+	time.Sleep(3 * time.Second)
+	fmt.Println("finish exec third function")
+}
+
+func main() {
+	fmt.Println("test")
+	start := time.Now()
+
+	fmt.Println(start.String())
+
+	FirstFunc()
+
+	SecondFunc()
+
+	ThrdFunc()
+
+	//time.Since,从之前的time到现在为止的时间。
+	//time.Now().Sub(t)
+	fmt.Printf("total time to finished: %s\n", time.Since(start).String())
+
+}
+```
+
+顺序执行结果：
+
+![goroutine_seq_exec_time](jpg/goroutine_seq_exec_time.png)
+
+其中time包中```Now()```函数获取当前时间，```Since(time)```获取从time到目前的时间间隔。
+
+###  8.6.2 并发执行
+
+三个函数按照goroutine方式执行：
+
+```go
+
+func FirstFunc() {
+	defer wg.Done()
+	fmt.Println("start exec first function")
+	time.Sleep(3 * time.Second)
+	fmt.Println("finish exec first function")
+
+}
+
+func SecondFunc() {
+	defer wg.Done()
+	fmt.Println("start exec second function")
+	time.Sleep(3 * time.Second)
+	fmt.Println("finish exec second function")
+}
+
+func ThrdFunc() {
+	defer wg.Done()
+	fmt.Println("start exec third function")
+	time.Sleep(3 * time.Second)
+	fmt.Println("finish exec third function")
+}
+
+var wg sync.WaitGroup
+
+func main() {
+	fmt.Println("test")
+	start := time.Now()
+	wg.Add(3)
+	fmt.Println(start.String())
+
+	go FirstFunc()
+
+	go SecondFunc()
+
+	go ThrdFunc()
+
+	//time.Since,从之前的time到现在为止的时间。
+	//time.Now().Sub(t)
+	wg.Wait()
+	fmt.Printf("total time to finished: %s\n", time.Since(start).String())
+
+}
+
+```
+
+
+
+需要注意的是：如果main方法中**，没有阻塞。其中的go不会执行。？**
+
+所以通过waitGroup等待三个gorouine并发执行，结果为：
+
+![goroutine_con_exec_time](jpg/goroutine_con_exec_time.png)
+
+其中执行的顺序是不同的。
+
+### 8.6.3 顺序并发执行1
+
+在上一节中多个goroutine开始执行时，不保证顺序，可以通过channel通知方式，确定开始执行的顺序。
+
+```go
+func FirstFunc(ch chan int) {
+	defer wg.Done()
+	seq := <-ch
+	fmt.Println("start exec first function:", seq)
+	time.Sleep(3 * time.Second)
+	fmt.Println("finish exec first function")
+
+}
+
+func SecondFunc(ch chan int) {
+	defer wg.Done()
+	seq := <-ch
+	fmt.Println("start exec sec function:", seq)
+	time.Sleep(3 * time.Second)
+	fmt.Println("finish exec second function")
+}
+
+func ThrdFunc(ch chan int) {
+	defer wg.Done()
+	seq := <-ch
+	fmt.Println("start exec third function:", seq)
+	time.Sleep(3 * time.Second)
+	fmt.Println("finish exec third function")
+}
+
+var wg sync.WaitGroup
+
+func main() {
+	fmt.Println("test")
+	start := time.Now()
+	wg.Add(3)
+	fmt.Println(start.String())
+
+	//通过通道的方式保证goroutine执行顺序
+	firstChan := make(chan int)
+	secChan := make(chan int)
+	thrdChan := make(chan int)
+
+	go FirstFunc(firstChan)
+	//按照顺序触发
+	firstChan <- 1
+	go SecondFunc(secChan)
+	secChan <- 2
+	go ThrdFunc(thrdChan)
+	thrdChan <- 3
+
+	//time.Since,从之前的time到现在为止的时间。
+	//time.Now().Sub(t)
+	wg.Wait()
+	fmt.Printf("total time to finished: %s\n", time.Since(start).String())
+
+}
+```
+
+创建无缓冲区管道，FirstFunc、SecondFunc和ThrdFunc函数在开始执行时，  ```seq := <-ch``` 从管道中读取int值。main函数中按照顺序向管道中写入。执行结果如下：
+
+![goroutine_con_seq_exec_time](jpg/goroutine_con_seq_exec_time.png)
+
+开始执行的顺序有了保障，但是完成执行的时间没有保障。
+
+### 8.6.4 顺序并发执行2
+
+在实际业务过程中会碰到一个场景，就多个goroutine执行，其中一个goroutineA中的部分“逻辑”完成之后，另外的一个goroutineB才能够B中的”逻辑“。比如：A接收数据然后放置到B中解析。考虑如下的场景：
+
+（1）goroutineA启动网络接收处理逻辑，开始接收数据；
+
+（2）goroutineB初始化buffer等，供A放入数据；
+
+（3）如果goroutineB还没有初始化完成，goroutineA已经收到了数据并执行了“存放到buffer”中的逻辑，出现异常；
+
+（4）goroutineB初始化“逻辑”需要在goroutineA存放数据之前完成。
+
+
 
 https://medium.com/technofunnel/understanding-golang-and-goroutines-72ac3c9a014d
 
