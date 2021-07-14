@@ -482,6 +482,45 @@ panic: SetUint using value obtained using unexported field。
 
 
 
+## 13.4 bufio
+
+包 bufio 实现缓冲I/O。它包装了一个 io.Reader 或 io.Writer 对象，创建另一个对象（Reader 或 Writer），该对象也实现了该接口，但为文本 I/O 提供了缓冲和一些帮助。
+
+### 13.4.1 实例化
+
+通过NewReader或者NewReaderSize实例化bufio对象。
+
+
+
+## 13.5 定时器
+
+通过timer定时器，可以在将来某个时间点或者某个时间间隔内重复执行Go代码。Go内建了timer和ticker特性。
+
+### 13.5.1 timer
+
+timer代表了未来的某个事件，告诉定时器需要等待多久，它提供了一个channel，到时会收到通知。可以放到for循环中定时执行某个函数。
+
+```go
+func ExecFunc() {
+
+	fmt.Println("execute function")
+}
+
+func main() {
+	for {
+		fmt.Println("create timer")
+		timer1 := time.NewTimer(2 * time.Second)
+
+		<-timer1.C
+		fmt.Println("timer 1fired")
+		ExecFunc()
+	}
+
+}
+```
+
+定时间隔执行函数。可以通过函数返回值决定是否需要退出。
+
 
 
 ###  参考文件
