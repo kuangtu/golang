@@ -521,7 +521,97 @@ func main() {
 
 定时间隔执行函数。可以通过函数返回值决定是否需要退出。
 
+### 13.5.2 ticker
 
+上一小结中timer主要是未来执行一次。而ticker是用于定时间隔执行。
+
+```go
+
+func main() {
+
+	ticker := time.NewTicker(1 * time.Second)
+
+	done := make(chan bool)
+
+	go func() {
+		for {
+			select {
+			case <-done:
+				return
+			case t := <-ticker.C:
+				fmt.Println("ticker at", t)
+			}
+		}
+	}()
+	fmt.Println("before sleep")
+	//main goroutine等待5秒钟，然后ticker.Stop
+	time.Sleep(5 * time.Second)
+	ticker.Stop()
+	done <- true
+	fmt.Println("ticker stopped")
+}
+
+```
+
+需要main goroutine中```time.Sleep()``` 等待结束。
+
+
+
+## 13.6 时间日期相关
+
+系统实现过程中，会经常用到日期、时间。
+
+### 13.6.1 当前时间
+
+默认的time.time类型表示了精度为纳秒的时间类型。可以通过不同的方法获取数据。
+
+```time.Now()```函数返回当前的本地时间。
+
+```go
+	//获取当前日期
+	curTime := time.Now()
+	curTimeUTC := time.Now().UTC()
+
+	fmt.Println("the curTime is:", curTime)
+	//UTC时间，与北京时间相差8小时
+	fmt.Println("the curTimeUTC is:", curTimeUTC)
+```
+
+
+
+### 13.6.2 创建特定日期的时间对象
+
+如果需要为特定的日期创建time对象，可以通过time.Date()方法：
+
+```go
+	specTime := time.Date(2021, time.July, 10, 18, 0, 0, 20*1000*1000, time.Local)
+	fmt.Println("the specific time is:", specTime)
+```
+
+创建特定日期：2021年7月10日，18点0分0秒，20毫秒，**第7个参数为纳秒**。
+
+输出结果为：
+
+![spectime](jpg/spectime.png)
+
+### 13.6.3 格式化输出
+
+通过特定字符串排列格式化输出time类型。
+
+（1）RFC1123格式
+
+```go
+	curTime = time.Now()
+	fmt.Println(curTime)
+	//通过RFC1123中规定的格式输出
+	fmt.Println(curTime.Format(time.RFC1123))
+```
+
+按照RFC1123格式输出：
+
+![timeformat1](jpg/timeformat1.png)
+
+（2）
 
 ###  参考文件
 
@@ -532,3 +622,6 @@ func main() {
 [Golang bytes.Buffer 用法精述](https://blog.csdn.net/K346K346/article/details/94456479)
 
 [binary.Write](https://golang.org/pkg/encoding/binary/#example_Write)
+
+[时间日期](https://qvault.io/golang/golang-date-time/)
+
