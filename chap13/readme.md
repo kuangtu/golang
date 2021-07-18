@@ -565,7 +565,7 @@ func main() {
 
 默认的time.time类型表示了精度为纳秒的时间类型。可以通过不同的方法获取数据。
 
-```time.Now()```函数返回当前的本地时间。
+（1）```time.Now()```函数返回当前的本地时间
 
 ```go
 	//获取当前日期
@@ -577,7 +577,16 @@ func main() {
 	fmt.Println("the curTimeUTC is:", curTimeUTC)
 ```
 
+（2）返回time对象的年月日
 
+```go
+	curTime = time.Now()
+	fmt.Println("year is:", curTime.Year())
+	fmt.Println("month is:", curTime.Month())
+	fmt.Println("day is:", curTime.Day())
+```
+
+获取time对象中的年、月、日。
 
 ### 13.6.2 创建特定日期的时间对象
 
