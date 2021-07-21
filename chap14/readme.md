@@ -907,9 +907,123 @@ func main() {
 
 
 
+## 14.10 如何优雅地关闭TCP Server
+
+
+### 14.10.1 TCP服务端框架
+
+通过TCP服务端监听端口等待客户端连接，然后通过go创建goroutine与客户端进行实际的通信。伪代码框架为：
+
+```go
+listener := net.Listen("tcp", ... address ...)
+for {
+  conn := listener.Accept()
+  go handler(conn)
+}
+```
+
+### 14.10.2 等待客户端连接关闭
+
+可以明确关闭监听（停止接受新连接），等待客户端结束连接，[参照代码](shutdown_tcp.go):
+
+```go
+package shutdown1
+
+import (
+	"io"
+	"log"
+	"net"
+	"sync"
+)
+
+type Server struct {
+	listener net.Listener
+	quit     chan interface{}
+	wg       sync.WaitGroup
+}
+
+func NewServer(addr string) *Server {
+	s := &Server{quit: make(chan interface{})}
+
+	l, err := net.Listen("tcp", addr)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	s.listener = l
+	s.wg.Add(1)
+
+	go s.serve()
+
+	return s
+
+}
+
+func (s *Server) Stop() {
+	close(s.quit)
+	s.listener.Close()
+	s.wg.Wait()
+}
+
+func (s *Server) serve() {
+	defer s.wg.Done()
+	for {
+		conn, err := s.listener.Accept()
+		if err != nil {
+			select {
+			case <-s.quit:
+				return
+			default:
+				log.Println("accept error:", err)
+			}
+		} else {
+			s.wg.Add(1)
+			go func() {
+				s.handlerConnection(conn)
+				s.wg.Done()
+			}()
+		}
+
+	}
+}
+
+func (s *Server) handlerConnection(conn net.Conn) {
+	defer conn.Close()
+	buf := make([]byte, 2048)
+	for {
+		n, err := conn.Read(buf)
+		if err != nil && err != io.EOF {
+			log.Println()
+		}
+
+		if n == 0 {
+			return
+		}
+
+		log.Printf("recv from %v: %s", conn.RemoteAddr(), string(buf[:n]))
+	}
+}
+
+func init() {
+	log.SetFlags(log.Ltime | log.Lmicroseconds)
+}
+
+```
+
+- Server通过listener监听新的连接。除了```net.Listener```，Server结构体含包含了用于通知退出的管道和等待服务器所有的goroutine完成的wait group。
+
+- 当Accept出现异常时，select检查s.quit管道是否有事件。如果发生错误，说明错误是我们关闭监听引起的，serve返回；
+- 关闭 s.quit 通道，然后关闭侦听器。这将导致服务中的 Accept 调用返回错误。由于此时 s.quit 已经关闭，所以 serve 将返回；
+- s.wg.Wait()等待所有的客户端关闭。
+
 
 
 
 
 https://colobu.com/2019/02/23/1m-go-tcp-connection/
+
+
+
+https://eli.thegreenplace.net/2020/graceful-shutdown-of-a-tcp-server-in-go/
 
