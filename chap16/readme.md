@@ -45,8 +45,20 @@ func main() {
 
 
 
+## 16.2 Buffering IO
+Golang语言提供了bufio包，以缓存方式累积结果后进行IO操作。通过减少了系统调用增加程序速度。
 
+### 16.2.1 bufio.Writer
+可以通过bufio.Writer方法在IO写入之前累积数据到buffer中。
+- buffer满了
+如果buffer满了，立即进行写入操作。
+- buffer还有空间
+不会尝试写入，直到通过Flush()方法告知。
+- 超过buffer容量
+跳过buffer直接写入。
 
 ## 参考文献
 
 [墙裂推荐](https://www.devdungeon.com/content/working-files-go#write_bytes)
+[bufio](https://www.educative.io/edpresso/how-to-read-and-write-with-golang-bufio)
+[文件操作](https://golangbot.com/write-files/)
