@@ -231,7 +231,7 @@ go.sum文件：
 
 
 
-## 构建模式
+## 10.10 依赖管理
 
 go module机制自动分析项目的依赖包，并选择最合适的版本。**如果项目依赖的包有多个版本，Go Module是如何选出最合适的哪个版本？**
 
@@ -273,6 +273,147 @@ import (
 但是Go另辟蹊径，在诸多兼容性版本间，他们不光要考虑最新最大的稳定与安全，还要尊重各个 module 的述求：A 明明说只要求 C v1.1.0，B 明明说只要求 C v1.3.0。**所以 Go 会在该项目依赖项的所有版本中，选出符合项目整体要求的“最小版本”。**
 
 这个例子中，C v1.3.0 是符合项目整体要求的版本集合中的版本最小的那个，于是 Go 命令选择了 C v1.3.0，而不是最新最大的 C v1.7.0。并且，Go 团队认为“最小版本选择”为 Go 程序实现持久的和可重现的构建提供了最佳的方案。
+
+
+
+## 10.11 构建模式
+
+10.10 说明了Go Module管理、包依赖基本原理。在日常工作中，也是围绕Go Module进行维护。
+
+### 1、为当前 module 添加一个依赖
+
+在一个Module中添加一个依赖包：
+
+```go
+
+package main
+
+import (
+  "github.com/google/uuid" 
+  "github.com/sirupsen/logrus"
+)
+
+func main() {
+  logrus.Println("hello, go module mode")
+  logrus.Println(uuid.NewString())
+}
+```
+
+如果```go build```编译，报错：
+
+
+
+没有module提供github.com/google/uuid 包，可以通过 go get命令手动增加。
+
+但是如果是复杂项目，依赖包很多，通过手动非常效率非常低下，可以通过```go mod tidy```自动分析和下载。
+
+
+
+此时go.mod文件中也增加了新的依赖包。
+
+```go
+module module-mode
+
+go 1.16
+
+require (
+	github.com/google/uuid v1.3.0
+	github.com/sirupsen/logrus v1.8.1
+)
+
+```
+
+### 2、升级、降级依赖的版本
+
+基于“语义导入版本”可以手动对依赖包信息升降级。Go 命令也可以根据版本兼容性，自动选择出合适的依赖版本了。
+
+以上面提到过的 logrus 为例，通过go list查看有多个版本：
+
+
+
+如果需要降低至某个版本，可以执行带有版本号的go get命令：
+
+
+
+从输出结果可以看到下载了V1.7.1版本，go.mod中依赖包信息也降低到V1.7.1版本。
+
+也可以使用go mod edit命令告知要依赖V1.7.1版本，然后go mod tidy下载依赖包。
+
+
+
+### 添加一个主版本号大于 1 的依赖
+
+语义导入版本机制有一个原则：如果新旧版本的包使用相同的导入路径，那么新包与旧包是兼容的。
+
+按照语义版本规范，如果我们要为项目引入主版本号大于 1 的依赖，比如 v2.0.0，那么由于这个版本与 v1、v0 开头的包版本都不兼容，我们在导入 v2.0.0 包时，不能再直接使用 github.com/user/repo，而要使用像下面代码中那样不同的包导入路径：
+
+```go
+import github.com/user/repo/v2/xxx
+```
+
+如果我们要为 Go 项目添加主版本号大于 1 的依赖，在声明它的导入路径的基础上，加上版本号信息。比如：
+
+```go
+
+package main
+
+import (
+  _ "github.com/go-redis/redis/v7"
+  "github.com/google/uuid"
+  "github.com/sirupsen/logrus"
+)
+
+func main() {
+  logrus.Println("hello, go module mode")
+  logrus.Println(uuid.NewString())
+}
+```
+
+
+
+### 升级依赖版本到一个不兼容版本
+
+不同主版本的包的导入路径是不同的，所以需要先将代码中 redis 包导入路径中的版本号改为 v8：
+
+```go
+
+import (
+  _ "github.com/go-redis/redis/v8"
+  "github.com/google/uuid"
+  "github.com/sirupsen/logrus"
+)
+```
+
+然后通过 go get来获取v8版本的依赖包。
+
+
+
+### 移除一个依赖
+
+如果不在使用某个依赖包，直接从代码中删掉对redis空导入这一行，然后go build命令构建，但是没有启动作用。通过go list命令列出当前的module的所有依赖，发现redis/v8仍然出现在结果中：
+
+```go
+$go list -m all
+github.com/bigwhite/module-mode
+github.com/cespare/xxhash/v2 v2.1.1
+github.com/davecgh/go-spew v1.1.1
+... ...
+github.com/go-redis/redis/v8 v8.11.1
+... ...
+gopkg.in/yaml.v2 v2.3.0
+```
+
+**这是因为如果源码满足成功构建的条件，go build 命令是不会“多管闲事”地清理 go.mod 中多余的依赖项的。**
+
+使用go mod tidy命令，将这个依赖项彻底从 Go Module 构建上下文中清除掉。
+
+
+
+### 特殊情况，使用vendor
+
+go mod vendor 命令在 vendor 目录下，创建了一份这个项目的依赖包的副本，并且通过 vendor/modules.txt 记录了 vendor 下的 module 以及版本。
+
+如果我们要基于 vendor 构建，而不是基于本地缓存的 Go Module 构建，我们需要在 go build 后面加上 -mod=vendor 参数。
 
 
 
