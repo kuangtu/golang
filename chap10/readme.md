@@ -301,7 +301,7 @@ func main() {
 
 如果```go build```编译，报错：
 
-
+![build错误](jpg/build错误.jpg)
 
 没有module提供github.com/google/uuid 包，可以通过 go get命令手动增加。
 
@@ -329,17 +329,17 @@ require (
 
 以上面提到过的 logrus 为例，通过go list查看有多个版本：
 
-
+![查询多个版本](jpg/查询多个版本.jpg)
 
 如果需要降低至某个版本，可以执行带有版本号的go get命令：
 
-
+![go get降级](jpg/go get降级.jpg)
 
 从输出结果可以看到下载了V1.7.1版本，go.mod中依赖包信息也降低到V1.7.1版本。
 
 也可以使用go mod edit命令告知要依赖V1.7.1版本，然后go mod tidy下载依赖包。
 
-
+![go mod 降级](jpg/go mod 降级.jpg)
 
 ### 添加一个主版本号大于 1 的依赖
 
