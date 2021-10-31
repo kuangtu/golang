@@ -14,6 +14,13 @@ func swap(x,y *int){
 
 }
 
+func add(a,b int64) (c ,d int64) {
+    x = a + b
+    y = a - b
+    c = x * 2
+    d = y * 2
+}
+
 func main() {
     var a = 1
     var b = 2

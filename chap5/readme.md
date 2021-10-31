@@ -21,7 +21,7 @@ func f(i, j, k int, s, t string)                 { /* ... */ }
 func f(i int, j int, k int,  s string, t string) { /* ... */ }
 ```
 
-你可能会偶尔遇到没有函数体的函数声明，这表示该函数不是以Go实现的。这样的声明定义了函数签名。
+**你可能会偶尔遇到没有函数体的函数声明，这表示该函数不是以Go实现的。这样的声明定义了函数签名。**
 
 
 
@@ -43,7 +43,19 @@ func Split(path string) (dir, file string)
 func HourMinSec(t time.Time) (hour, minute, second int)
 ```
 
-如果一个函数所有的返回值都有显式的变量名，那么该函数的return语句可以省略操作数。这称之为bare return。
+如果一个函数所有的返回值都有显式的变量名，那么该函数的return语句可以省略操作数。这称之为bare return。比如：
+
+```
+func add(a,b int64) (c ,d int64) {
+    x = a + b
+    y = a - b
+    c = x * 2
+    d = y * 2
+    return //相当于return c,d 
+}
+```
+
+
 
 **"_"下划线标识符，作用是占位符。如果要调用的函数返回多个值，而又不需要其中的某个值，就可以使用下划线标识符将其忽略。**
 
@@ -129,6 +141,53 @@ defer语句经常被用于处理成对的操作，如打开、关闭、连接、
 
 
 
-## 5.9 Panic异常
+## 5.9 Panic异常和recover恢复
 
-Go的类型系统会在编译时捕获很多错误，但有些错误只能在运行时检查，如数组访问越界、空指针引用等。这些运行时错误会引起painc异常。
+Go的类型系统会在编译时捕获很多错误，但有些错误只能在运行时检查，如数组访问越界、空指针引用等。这些运行时错误会引起painc异常。可以调用内置函数panic来产生一个恐慌以使当前协程进入恐慌状况。
+
+ 一旦一个函数调用产生一个恐慌，此函数调用将立即进入它的退出阶段，在此函数调用中被推入堆栈的延迟调用将按照它们被推入的顺序逆序执行。
+
+通过在一个延迟函数调用之中调用内置函数`recover`，当前协程中的一个恐慌可以被消除，从而使得当前协程重新进入正常状况。**在延迟函数中处理了异常，然后恢复，但是不能再执行panic之后的函数语句？？**
+
+函数声明原型如下：
+
+```go
+func panic(v interface{})
+func recover() interface{}
+```
+
+一个`recover`函数的返回值为其所恢复的恐慌在产生时被一个`panic`函数调用所消费的参数。
+
+示例如下：
+
+```go
+package main
+
+import "fmt"
+
+func main() {
+
+    defer func() {
+        fmt.Println("后执行")
+        fmt.Println("正常退出")
+    }()
+    
+    fmt.Println("开始执行")
+    
+    defer func() {
+        v := recover()
+        fmt.Println("先执行")
+        fmt.Println("恐慌被恢复了:", v)
+    }()
+    
+    panic("恐慌") //产生一个恐慌
+    fmt.Println("无法执行")
+
+}
+```
+
+panic之后，开始进入退出节点，逆序执行压缩的defer函数。recover返回值为被panic调用所使用的参数。
+
+执行结果如下：
+
+![panic_recover](jpg/panic_recover.jpg)
