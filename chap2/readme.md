@@ -197,6 +197,35 @@ func main(){
 ```
 
 
+
+### 2.3.6 避免变量遮蔽
+
+代码编写过程中会存在变量遮蔽的情况：
+
+- 遮蔽预定义标识符
+- 遮蔽包代码块中的变量
+- 遮蔽外层显式代码块中的变量
+
+可以通过检测变量遮蔽的问题：
+
+（1）安装检查插件
+
+```go
+
+$go install golang.org/x/tools/go/analysis/passes/shadow/cmd/shadow@latest
+go: downloading golang.org/x/tools v0.1.5
+go: downloading golang.org/x/mod v0.4.2
+```
+
+（2）插件检查
+
+```go
+$go vet -vettool=$(which shadow) -strict complex.go 
+./complex.go:13:12: declaration of "err" shadows declaration at line 11
+```
+
+
+
 ## 2.4 赋值
 
 最简单的赋值语句是将要被赋值的变量放在=的左边，新值的表达式放在=的右边。
