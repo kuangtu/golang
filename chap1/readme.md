@@ -2,7 +2,13 @@
 
  [官网下载](https://golang.org/dl/) Go1.6版本，笔者在windows环境中安装，一路Next，然后在cmd中运行。
 
-![start](jpg/start.jpg)
+![start](jpg\start.jpg)
+
+## 配置
+
+
+
+
 
 ## Hello World
 
