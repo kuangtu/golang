@@ -16,3 +16,6 @@
 
 *.swp
 *.txt
+
+
+.vscode/
