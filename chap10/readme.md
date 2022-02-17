@@ -280,7 +280,7 @@ import (
 
 10.10 说明了Go Module管理、包依赖基本原理。在日常工作中，也是围绕Go Module进行维护。
 
-### 1、为当前 module 添加一个依赖
+### 10.11.1 为当前 module 添加一个依赖
 
 在一个Module中添加一个依赖包：
 
@@ -323,7 +323,7 @@ require (
 
 ```
 
-### 2、升级、降级依赖的版本
+### 10.11.2 升级、降级依赖的版本
 
 基于“语义导入版本”可以手动对依赖包信息升降级。Go 命令也可以根据版本兼容性，自动选择出合适的依赖版本了。
 
@@ -341,7 +341,7 @@ require (
 
 ![go mod 降级](jpg/go mod 降级.jpg)
 
-### 添加一个主版本号大于 1 的依赖
+### 10.11.3 添加一个主版本号大于 1 的依赖
 
 语义导入版本机制有一个原则：如果新旧版本的包使用相同的导入路径，那么新包与旧包是兼容的。
 
@@ -371,7 +371,7 @@ func main() {
 
 
 
-### 升级依赖版本到一个不兼容版本
+### 10.11.4 升级依赖版本到一个不兼容版本
 
 不同主版本的包的导入路径是不同的，所以需要先将代码中 redis 包导入路径中的版本号改为 v8：
 
@@ -388,7 +388,7 @@ import (
 
 
 
-### 移除一个依赖
+### 10.11.5 移除一个依赖
 
 如果不在使用某个依赖包，直接从代码中删掉对redis空导入这一行，然后go build命令构建，但是没有启动作用。通过go list命令列出当前的module的所有依赖，发现redis/v8仍然出现在结果中：
 
@@ -409,7 +409,7 @@ gopkg.in/yaml.v2 v2.3.0
 
 
 
-### 特殊情况，使用vendor
+### 10.11.6 特殊情况，使用vendor
 
 go mod vendor 命令在 vendor 目录下，创建了一份这个项目的依赖包的副本，并且通过 vendor/modules.txt 记录了 vendor 下的 module 以及版本。
 
@@ -419,7 +419,7 @@ go mod vendor 命令在 vendor 目录下，创建了一份这个项目的依赖�
 
 main.main 函数：Go 应用的入口函数。可执行的程序的main包中必须定义main函数，否则Go编译器会报错。
 
-### 1、init 函数：Go 包的初始化函数
+### 10.12.1 init 函数：Go 包的初始化函数
 
 Go程序在包初始化时，自动调用它的init函数，因此这些 init 函数的执行就都会发生在 main 函数之前。
 
@@ -443,7 +443,7 @@ func main() {
 
 ![callinit_err](jpg/callinit_err.jpg)
 
-### 2、包的初始化顺序
+### 10.12.2 包的初始化顺序
 
 Go 包是程序逻辑封装的基本单元，一个 Go 程序就是由一组包组成的，程序的初始化就是这些包的初始化。每个 Go 包还会有自己的依赖包、常量、变量、init 函数（其中 main 包有 main 函数）等。
 
@@ -453,13 +453,60 @@ Go 包是程序逻辑封装的基本单元，一个 Go 程序就是由一组包�
 
 
 
-### 3、init函数用途
+### 10.12.3 init函数用途
 
-（1）重置包级变量值
+#### （1）重置包级变量值
 
-（2）是实现对包级变量的复杂初始化
+init函数对包级数据进行初始状态检查。比如：flag包初始化时，由于 init 函数初始化次序在包级变量之后，因此包级变量 CommandLine 会在 init 函数之前被初始化了。
 
-（3）在 init 函数中实现“注册模式”
+```go
+
+var CommandLine = NewFlagSet(os.Args[0], ExitOnError)
+
+func NewFlagSet(name string, errorHandling ErrorHandling) *FlagSet {
+    f := &FlagSet{
+        name:          name,
+        errorHandling: errorHandling,
+    }
+    f.Usage = f.defaultUsage
+    return f
+}
+
+func (f *FlagSet) defaultUsage() {
+    if f.name == "" {
+        fmt.Fprintf(f.Output(), "Usage:\n")
+    } else {
+        fmt.Fprintf(f.Output(), "Usage of %s:\n", f.name)
+    }
+    f.PrintDefaults()
+}
+```
+
+CommandLine变量通过NewFlagSet创建，usage字段被赋值为defaultUsage。
+
+flag 包在 init 函数中重置了 CommandLine 的 Usage 字段：
+
+```go
+
+func init() {
+    CommandLine.Usage = commandLineUsage // 重置CommandLine的Usage字段
+}
+
+func commandLineUsage() {
+    Usage()
+}
+
+var Usage = func() {
+    fmt.Fprintf(CommandLine.Output(), "Usage of %s:\n", os.Args[0])
+    PrintDefaults()
+}
+```
+
+这个时候我们会发现，CommandLine 的 Usage 字段，设置为了一个 flag 包内的未导出函数 commandLineUsage，后者则直接使用了 flag 包的另外一个导出包变量 Usage。这样，就可以通过 init 函数，将 CommandLine 与包变量 Usage 关联在一起了。
+
+#### （2）是实现对包级变量的复杂初始化
+
+#### （3）在 init 函数中实现“注册模式”
 
 ## 参考文献
 
