@@ -331,9 +331,21 @@ cap: 是底层数组的长度，也是切片的最大容量，cap 值永远大�
 
 哈希表是一种巧妙并且实用的数据结构。它是一个无序的key/value对的集合，**其中所有的key都是不同的**，然后通过给定的key可以在常数时间复杂度内检索、更新或删除对应的value。
 
-一个map就是一个哈希表的引用，map类型可以写为map[K]V，其中K和V分别对应key和value。map中所有的key都有相同的类型，所有的value也有着相同的类型，但是key和value之间可以是不同的数据类型。
+一个map就是一个哈希表的引用，map类型可以写为map[K]V，其中K和V分别对应key和value。map中所有的key都有相同的类型，所有的value也有着相同的类型，但是**key和value之间可以是不同的数据类型**。
+
+因为 map 类型要保证 key 的唯一性。Go 语言中要求，key 的类型必须支持“==”和“!=”两种比较操作符。
 
 ### 4.3.1 创建和初始化
+
+**声明map变量**
+
+```go
+var m map[string]int // 一个map[string]int类型的变量
+```
+
+map 类型变量的默认值为 nil。
+
+
 
 **使用make声明映射**
 
@@ -354,9 +366,9 @@ ages := map[string]int{
 dict := map[int][]string{}
 ```
 
+字符串切片作为map的值。
 
-
-## 4.3.2 使用映射
+### 4.3.2 基本操作
 
 使用内置的delete函数可以删除元素：
 
