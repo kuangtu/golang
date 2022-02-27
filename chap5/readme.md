@@ -1,6 +1,8 @@
 # 第五章、函数
 
-函数可以让我们将一个语句序列打包为一个单元，然后可以从程序中其它地方多次调用。函数的机制可以让我们将一个大的工作分解为小的任务，这样的小任务可以让不同程序员在不同时间、不同地方独立完成。
+通常函数可以让我们将一个语句序列打包为一个单元，然后可以从程序中其它地方多次调用。函数的机制可以让我们将一个大的工作分解为小的任务，这样的小任务可以让不同程序员在不同时间、不同地方独立完成。
+
+在 Go 语言中，函数是唯一一种基于特定输入，实现特定任务并可返回任务执行结果的代码块（Go 语言中的方法本质上也是函数）
 
 ## 5.1 函数声明
 
@@ -191,6 +193,161 @@ panic之后，开始进入退出节点，逆序执行压缩的defer函数。reco
 执行结果如下：
 
 ![panic_recover](jpg/panic_recover.jpg)
+
+
+
+## 5.10 跟踪函数调用链
+
+通过defer函数跟踪函数的执行过程。示例如下：
+
+```go
+// trace.go
+package main
+  
+func Trace(name string) func() {
+    println("enter:", name)
+    return func() {
+        println("exit:", name)
+    }
+}
+
+func foo() {
+    defer Trace("foo")()
+    bar()
+}
+
+func bar() {
+    defer Trace("bar")()
+}
+
+func main() {
+    defer Trace("main")()
+    foo()
+}
+```
+
+运行结果如下：
+
+
+
+
+
+运行过程：
+
+Go会对defer后面的表达式```Trace("foo")()```进行求值，即：执行Trace函数。
+
+然后返回一个闭包函数，这个闭包函数一旦被执行，就会输出离开某函数的日志。
+
+但是存在如下问题：
+
+- 显式传入要跟踪的函数名；
+- 如果是并发应用，不同 Goroutine 中函数链跟踪混在一起无法分辨；
+- 输出的跟踪结果缺少层次感，调用关系不易识别；
+- 需要跟踪的函数需要手动调用Trace函数。
+
+### 5.10.1 自动获取所跟踪函数的函数名
+
+手动传入函数名的方式：
+
+```go
+
+defer Trace("foo")()
+```
+
+如果能够自动获取函数名，则只需要调用Trace()即可，保持一致性。
+
+需要借助runtime包：
+
+```go
+
+// trace1/trace.go
+
+func Trace() func() {
+    pc, _, _, ok := runtime.Caller(1)
+    if !ok {
+        panic("not found caller")
+    }
+
+    fn := runtime.FuncForPC(pc)
+    name := fn.Name()
+
+    println("enter:", name)
+    return func() { println("exit:", name) }
+}
+
+func foo() {
+    defer Trace()()
+    bar()
+}
+
+func bar() {
+    defer Trace()()
+}
+
+func main() {
+    defer Trace()()
+    foo()
+}
+```
+
+通过 runtime.Caller 函数获得当前 Goroutine 的函数调用栈上的信息.
+
+runtime.Caller 的参数标识的是要获取的是哪一个栈帧的信息。当参数为 0 时，返回的是 Caller 函数的调用者的函数信息，在这里就是 Trace 函数。但我们需要的是 Trace 函数的调用者的信息，于是我们传入 1。
+
+Caller 函数有四个返回值：第一个返回值代表的是程序计数（pc）；第二个和第三个参数代表对应函数所在的源文件名以及所在行数，这里我们暂时不需要；最后一个参数代表是否能成功获取这些信息，如果获取失败，我们抛出 panic。
+
+基于程序计数器（PC）得到被跟踪函数的函数名称。
+
+### 5.10.2 增加 Goroutine 标识
+
+在输出的函数出入口信息时，带上一个在程序每次执行时能唯一区分 Goroutine 的 Goroutine ID。
+
+但是Go 核心团队为了避免Goroutine 滥用，故意没有将 Goroutine ID 暴露给开发者。但是Go 标准库的 h2_bundle.go中有一个获取方法，可以进行参考使用：
+
+```go
+
+// trace2/trace.go
+var goroutineSpace = []byte("goroutine ")
+
+func curGoroutineID() uint64 {
+    b := make([]byte, 64)
+    b = b[:runtime.Stack(b, false)]
+    // Parse the 4707 out of "goroutine 4707 ["
+    b = bytes.TrimPrefix(b, goroutineSpace)
+    i := bytes.IndexByte(b, ' ')
+    if i < 0 {
+        panic(fmt.Sprintf("No space found in %q", b))
+    }
+    b = b[:i]
+    n, err := strconv.ParseUint(string(b), 10, 64)
+    if err != nil {
+        panic(fmt.Sprintf("Failed to parse goroutine ID out of %q: %v", b, err))
+    }
+    return n
+}
+```
+
+在 Trace 函数中添加 Goroutine ID 信息的输出：
+
+```go
+
+// trace2/trace.go
+func Trace() func() {
+    pc, _, _, ok := runtime.Caller(1)
+    if !ok {
+        panic("not found caller")
+    }
+
+    fn := runtime.FuncForPC(pc)
+    name := fn.Name()
+
+    gid := curGoroutineID()
+    fmt.Printf("g[%05d]: enter: [%s]\n", gid, name)
+    return func() { fmt.Printf("g[%05d]: exit: [%s]\n", gid, name) }
+}
+```
+
+
 
 
 
